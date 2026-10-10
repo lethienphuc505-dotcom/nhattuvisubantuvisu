@@ -2,12 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="3D Whack-a-Mole with Real Mouse",
+    page_title="Cute 3D Whack-a-Mole",
     page_icon="🐹",
     layout="centered"
 )
 
-game_3d_mouse_code = """
+game_3d_cute_mouse = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -17,37 +17,39 @@ game_3d_mouse_code = """
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
-            background-color: #0b0f19; color: #fff;
+            background-color: #1a1c29; color: #fff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             overflow: hidden;
         }
         .header { text-align: center; margin-bottom: 5px; }
-        h1 { color: #00fff5; font-size: 22px; margin: 0; }
+        h1 { color: #ffb703; font-size: 22px; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .info-container {
             display: flex; justify-content: space-between;
-            width: 380px; margin: 10px 0;
+            width: 380px; margin: 8px 0;
             font-size: 16px; font-weight: bold;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.08);
+            padding: 8px 16px; border-radius: 14px;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
         }
         #canvas-container {
             width: 380px; height: 320px;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            background: #111827;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            background: #212538;
+            border: 2px solid rgba(255,255,255,0.05);
         }
         .btn-start {
             margin-top: 12px;
-            padding: 10px 24px;
+            padding: 10px 28px;
             font-size: 15px; font-weight: bold;
-            background: linear-gradient(135deg, #00fff5, #7000ff);
-            color: #fff; border: none; border-radius: 12px;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.3);
-            transition: transform 0.1s;
+            background: linear-gradient(135deg, #fb8500, #ffb703);
+            color: #1a1c29; border: none; border-radius: 14px;
+            cursor: pointer; box-shadow: 0 6px 20px rgba(251,133,0,0.4);
+            transition: transform 0.1s, filter 0.2s;
         }
+        .btn-start:hover { filter: brightness(1.1); }
         .btn-start:active { transform: scale(0.95); }
     </style>
     <!-- Thư viện Three.js 3D -->
@@ -56,17 +58,17 @@ game_3d_mouse_code = """
 <body>
 
 <div class="header">
-    <h1>🐹 Game Đập Chuột 3D Thật 🎮</h1>
+    <h1>🐹 Đập Chuột 3D Hoạt Hình 🌸</h1>
 </div>
 
 <div class="info-container">
-    <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
-    <div>Thời gian: <span id="timer" style="color: #ff4b4b;">30</span>s</div>
+    <div>Điểm: <span id="score" style="color: #ffb703;">0</span></div>
+    <div>Thời gian: <span id="timer" style="color: #ef476f;">30</span>s</div>
 </div>
 
 <div id="canvas-container"></div>
 
-<button class="btn-start" id="startBtn" onclick="startGame()">Bắt Đầu Chơi 3D</button>
+<button class="btn-start" id="startBtn" onclick="startGame()">Bắt Đầu Chơi 🎮</button>
 
 <script>
     let scene, camera, renderer;
@@ -82,72 +84,91 @@ game_3d_mouse_code = """
         const container = document.getElementById('canvas-container');
         
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111827);
+        scene.background = new THREE.Color(0x212538);
 
         camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 7, 7);
-        camera.lookAt(0, 0, 0);
+        camera.position.set(0, 7.5, 7.5);
+        camera.lookAt(0, -0.2, 0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.appendChild(renderer.domElement);
 
-        // Ánh sáng
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        // Ánh sáng dịu nhẹ phong cách hoạt hình
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
 
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(5, 10, 5);
-        scene.add(pointLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 12, 7);
+        scene.add(dirLight);
 
-        // Tạo 9 hố và 9 mô hình chú chuột 3D
+        // Tạo 9 hố đất và 9 chú chuột 3D đáng yêu
         const spacing = 1.6;
         for (let x = -1; x <= 1; x++) {
             for (let z = -1; z <= 1; z++) {
-                // 1. Tạo hố đất
-                const holeGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.3, 32);
-                const holeMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
+                // 1. Hố đất hình trụ màu tối có viền miệng hố
+                const holeGeo = new THREE.CylinderGeometry(0.58, 0.52, 0.35, 32);
+                const holeMat = new THREE.MeshStandardMaterial({ color: 0x11131a, roughness: 0.9 });
                 const hole = new THREE.Mesh(holeGeo, holeMat);
-                hole.position.set(x * spacing, 0, z * spacing);
+                hole.position.set(x * spacing, -0.05, z * spacing);
                 scene.add(hole);
 
-                // 2. Tạo nhóm mô hình chú chuột (Gồm thân, tai, mũi)
+                // 2. Nhóm mô hình chuột hoạt hình 3D
                 const moleGroup = new THREE.Group();
 
-                // Thân chuột (Màu xám lông chuột)
-                const bodyGeo = new THREE.SphereGeometry(0.38, 32, 32);
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.6 });
+                // Thân chuột (Màu xám sáng mịn màng)
+                const bodyGeo = new THREE.SphereGeometry(0.35, 32, 32);
+                bodyGeo.scale(1, 1.15, 1);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc5d3e8, roughness: 0.5 });
                 const body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.position.y = 0.1;
+                body.position.y = 0.05;
                 moleGroup.add(body);
 
-                // Tai trái
-                const earGeo = new THREE.SphereGeometry(0.15, 16, 16);
-                const earMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.5 }); // Tai hồng
-                const leftEar = new THREE.Mesh(earGeo, earMat);
-                leftEar.position.set(-0.25, 0.35, 0);
-                moleGroup.add(leftEar);
+                // Má hồng phúng phính
+                const cheekGeo = new THREE.SphereGeometry(0.1, 16, 16);
+                const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffb5a7, roughness: 0.4 });
+                const leftCheek = new THREE.Mesh(cheekGeo, cheekMat);
+                leftCheek.position.set(-0.22, -0.02, 0.22);
+                moleGroup.add(leftCheek);
+                const rightCheek = leftCheek.clone();
+                rightCheek.position.x = 0.22;
+                moleGroup.add(rightCheek);
 
-                // Tai phải
-                const rightEar = new THREE.Mesh(earGeo, earMat);
-                rightEar.position.set(0.25, 0.35, 0);
+                // Tai trái & Tai phải (Màu hồng bên trong)
+                const earGeo = new THREE.SphereGeometry(0.14, 16, 16);
+                const earMat = new THREE.MeshStandardMaterial({ color: 0x93a4b8, roughness: 0.5 });
+                const leftEar = new THREE.Mesh(earGeo, earMat);
+                leftEar.position.set(-0.28, 0.38, -0.05);
+                moleGroup.add(leftEar);
+                const rightEar = leftEar.clone();
+                rightEar.position.x = 0.28;
                 moleGroup.add(rightEar);
 
-                // Mũi chuột
-                const noseGeo = new THREE.SphereGeometry(0.08, 16, 16);
-                const noseMat = new THREE.MeshStandardMaterial({ color: 0xdb2777 });
+                // Mắt chuột (Mắt bi tròn đen bóng)
+                const eyeGeo = new THREE.SphereGeometry(0.05, 16, 16);
+                const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2b2d42, roughness: 0.1 });
+                const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+                leftEye.position.set(-0.13, 0.12, 0.28);
+                moleGroup.add(leftEye);
+                const rightEye = leftEye.clone();
+                rightEye.position.x = 0.13;
+                moleGroup.add(rightEye);
+
+                // Mũi chuột hồng xinh
+                const noseGeo = new THREE.SphereGeometry(0.06, 16, 16);
+                const noseMat = new THREE.MeshStandardMaterial({ color: 0xff5964, roughness: 0.3 });
                 const nose = new THREE.Mesh(noseGeo, noseMat);
-                nose.position.set(0, 0.15, 0.32);
+                nose.position.set(0, 0.04, 0.33);
                 moleGroup.add(nose);
 
-                // Đặt vị trí ban đầu ẩn dưới hố
-                moleGroup.position.set(x * spacing, -0.8, z * spacing);
+                // Vị trí ẩn bên dưới hố
+                moleGroup.position.set(x * spacing, -0.9, z * spacing);
                 scene.add(moleGroup);
                 moleGroups.push(moleGroup);
             }
         }
 
-        // Bắt sự kiện click chuột tương tác 3D
+        // Bắt sự kiện click chuột
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
@@ -158,16 +179,16 @@ game_3d_mouse_code = """
             mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-            
-            // Kiểm tra click vào các nhóm chuột
             const intersects = raycaster.intersectObjects(scene.children, true);
+            
             if (intersects.length > 0) {
-                // Tìm xem click vào thành phần của con chuột nào
                 for (let i = 0; i < moleGroups.length; i++) {
                     if (isDescendant(intersects[0].object, moleGroups[i])) {
                         if (i === activeIndex) {
                             score += 10;
                             document.getElementById('score').textContent = score;
+                            
+                            // Hiệu ứng thụt xuống nhanh khi bị đập trúng
                             hideMole(activeIndex);
                             activeIndex = -1;
                         }
@@ -180,7 +201,6 @@ game_3d_mouse_code = """
         animate();
     }
 
-    // Hàm phụ kiểm tra object có nằm trong nhóm chuột không
     function isDescendant(child, parent) {
         let node = child.parent;
         while (node != null) {
@@ -224,25 +244,25 @@ game_3d_mouse_code = """
 
         activeIndex = Math.floor(Math.random() * moleGroups.length);
         
-        // Hiệu ứng chuột trồi lên
-        let currentY = -0.8;
-        const targetY = -0.1;
+        // Hiệu ứng chuột trồi lên mượt mà
+        let currentY = -0.9;
+        const targetY = -0.15;
         const riseInterval = setInterval(() => {
-            currentY += 0.1;
+            currentY += 0.12;
             if (currentY >= targetY) {
                 currentY = targetY;
                 clearInterval(riseInterval);
             }
             moleGroups[activeIndex].position.y = currentY;
-        }, 20);
+        }, 15);
 
-        let speed = Math.max(500, 1200 - (score * 25));
+        let speed = Math.max(450, 1100 - (score * 25));
         moleTimer = setTimeout(showRandomMole, speed);
     }
 
     function hideMole(index) {
         if (index === -1) return;
-        moleGroups[index].position.y = -0.8; // Thụt xuống
+        moleGroups[index].position.y = -0.9;
     }
 
     function endGame() {
@@ -254,8 +274,8 @@ game_3d_mouse_code = """
             activeIndex = -1;
         }
         document.getElementById('startBtn').style.display = 'block';
-        document.getElementById('startBtn').textContent = 'Chơi Lại 3D';
-        alert(`Trò chơi kết thúc! Tổng điểm chuột 3D của bạn là: ${score}`);
+        document.getElementById('startBtn').textContent = 'Chơi Lại 🎮';
+        alert(`Hết giờ rồi! Tổng số điểm của bạn là: ${score}`);
     }
 
     window.onload = init3D;
@@ -265,4 +285,4 @@ game_3d_mouse_code = """
 </html>
 """
 
-components.html(game_3d_mouse_code, height=520)
+components.html(game_3d_cute_mouse, height=520)
