@@ -2,17 +2,17 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Space Shooter Game",
+    page_title="Space Shooter with Menu",
     page_icon="🚀",
     layout="centered"
 )
 
-space_shooter_code = """
+space_menu_code = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -23,66 +23,93 @@ space_shooter_code = """
             height: 100vh;
             overflow: hidden;
         }
-        h1 { color: #00fff5; font-size: 22px; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0,255,245,0.5); }
-        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 12px; }
-        .info-container {
-            display: flex; justify-content: space-between;
-            width: 400px; margin-bottom: 10px;
-            font-size: 16px; font-weight: bold;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        canvas {
-            border: 2px solid #1f2937; border-radius: 14px;
+        .container {
+            position: relative;
+            width: 400px; height: 500px;
+            border: 2px solid #1f2937; border-radius: 16px;
             background-color: #050811;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            outline: none;
-            cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
         }
-        .btn-start {
-            margin-top: 15px;
-            padding: 10px 24px;
-            font-size: 15px; font-weight: bold;
+        .menu-screen {
+            position: absolute; width: 100%; height: 100%;
+            background: rgba(5, 8, 17, 0.92);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        .menu-screen.hidden {
+            opacity: 0; pointer-events: none;
+        }
+        h1 { color: #00fff5; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,245,0.6); text-align: center; }
+        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }
+        
+        .menu-btn {
+            width: 200px; padding: 12px 0;
+            margin: 8px 0; font-size: 16px; font-weight: 800;
             background: linear-gradient(135deg, #00fff5, #7000ff);
-            color: #fff; border: none; border-radius: 12px;
+            color: #fff; border: none; border-radius: 14px;
             cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.3);
-            transition: transform 0.1s;
+            transition: transform 0.1s, filter 0.2s;
         }
-        .btn-start:active { transform: scale(0.95); }
+        .menu-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .menu-btn:active { transform: scale(0.95); }
+        .menu-btn.mode-btn {
+            background: linear-gradient(135deg, #fb8500, #ffb703);
+            color: #0b0f19;
+            box-shadow: 0 4px 15px rgba(251,133,0,0.3);
+        }
+        
+        .hud {
+            position: absolute; top: 12px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between;
+            font-size: 15px; font-weight: bold; z-index: 5;
+        }
+        canvas { outline: none; }
     </style>
 </head>
 <body>
 
-<h1>🚀 Không Chiến Không Gian (Dễ Chơi) 🌌</h1>
-<div class="subtitle">Dùng phím mũi tên Trái/Phải để di chuyển, Phím Cách (Space) để bắn!</div>
+<div class="container" id="gameContainer">
+    <!-- MÀN HÌNH MENU -->
+    <div class="menu-screen" id="menuScreen">
+        <h1>🚀 KHÔNG CHIẾN 🌌</h1>
+        <div class="subtitle" id="modeText">Chế độ hiện tại: DỄ (Chill)</div>
+        
+        <button class="menu-btn" onclick="startGame()">CHƠI NGAY ▶</button>
+        <button class="menu-btn mode-btn" onclick="toggleMode()">ĐỔI CHẾ ĐỘ ⚙️</button>
+    </div>
 
-<div class="info-container">
-    <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
-    <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
+    <!-- HUD TRONG GAME -->
+    <div class="hud">
+        <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
+        <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="500" tabindex="1"></canvas>
 </div>
-
-<canvas id="gameCanvas" width="400" height="420" tabindex="1"></canvas>
-
-<button class="btn-start" id="startBtn" onclick="startGame()">Bắt Đầu Chơi 🎮</button>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const scoreElement = document.getElementById("score");
     const livesElement = document.getElementById("lives");
+    const menuScreen = document.getElementById("menuScreen");
+    const modeText = document.getElementById("modeText");
 
     let score = 0;
     let lives = 3;
     let isPlaying = false;
     let gameInterval = null;
+    let currentMode = 'easy'; // 'easy' hoặc 'hard'
 
     let player = {
         x: 180,
-        y: 360,
+        y: 430,
         width: 40,
         height: 35,
-        speed: 4.5, // Giảm tốc độ di chuyển của tàu để dễ kiểm soát hơn
+        speed: 5,
         dx: 0
     };
 
@@ -90,7 +117,7 @@ space_shooter_code = """
     let enemies = [];
     let stars = [];
 
-    for(let i=0; i<40; i++) {
+    for(let i=0; i<45; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
@@ -99,7 +126,20 @@ space_shooter_code = """
         });
     }
 
+    function toggleMode() {
+        if (currentMode === 'easy') {
+            currentMode = 'hard';
+            modeText.textContent = "Chế độ hiện tại: KHÓ (Thử Thách 🔥)";
+            modeText.style.color = "#ff4b4b";
+        } else {
+            currentMode = 'easy';
+            modeText.textContent = "Chế độ hiện tại: DỄ (Chill 🌸)";
+            modeText.style.color = "#00fff5";
+        }
+    }
+
     function startGame() {
+        menuScreen.classList.add("hidden");
         isPlaying = true;
         score = 0;
         lives = 3;
@@ -108,7 +148,6 @@ space_shooter_code = """
         player.x = 180;
         scoreElement.textContent = score;
         updateLivesDisplay();
-        document.getElementById("startBtn").style.display = "none";
         
         canvas.focus();
 
@@ -132,20 +171,23 @@ space_shooter_code = """
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-        // Tăng tốc độ đạn bay để bắn trúng mượt hơn
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].y -= 10;
             if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // Giảm tần suất xuất hiện kẻ địch (cho thưa ra để dễ thở)
-        if (Math.random() < 0.018) {
+        // Tần suất và tốc độ kẻ địch thay đổi theo chế độ chọn
+        let spawnRate = currentMode === 'easy' ? 0.018 : 0.035;
+        let enemySpeedMin = currentMode === 'easy' ? 1.2 : 2.2;
+        let enemySpeedMax = currentMode === 'easy' ? 2.2 : 3.8;
+
+        if (Math.random() < spawnRate) {
             enemies.push({
                 x: Math.random() * (canvas.width - 40),
                 y: -40,
                 width: 36,
                 height: 32,
-                speed: 1.2 + Math.random() * 1.0 // Giảm tốc độ rơi của địch xuống chậm hơn hẳn
+                speed: enemySpeedMin + Math.random() * (enemySpeedMax - enemySpeedMin)
             });
         }
 
@@ -216,91 +258,3 @@ space_shooter_code = """
 
         ctx.fillStyle = "#7000ff";
         ctx.fillRect(px, py + 18, 8, 12);
-        ctx.fillRect(px + 32, py + 18, 8, 12);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(px + 20, py + 12, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = "#ffb703";
-        ctx.fillRect(px + 14, py + 25, 4, 6 + Math.random() * 4);
-        ctx.fillRect(px + 22, py + 25, 4, 6 + Math.random() * 4);
-
-        // Đạn
-        ctx.fillStyle = "#ffb703";
-        bullets.forEach(b => {
-            ctx.fillRect(b.x - 2, b.y, 4, 12);
-        });
-
-        // Tàu địch
-        enemies.forEach(e => {
-            let ex = e.x;
-            let ey = e.y;
-
-            ctx.fillStyle = "#ff4b4b";
-            ctx.beginPath();
-            ctx.moveTo(ex + 18, ey + 32);
-            ctx.lineTo(ex, ey + 5);
-            ctx.lineTo(ex + 36, ey + 5);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = "#b7094c";
-            ctx.fillRect(ex + 4, ey + 10, 28, 6);
-
-            ctx.fillStyle = "#00fff5";
-            ctx.beginPath();
-            ctx.arc(ex + 18, ey + 18, 4, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
-
-    function endGame() {
-        isPlaying = false;
-        clearInterval(gameInterval);
-        
-        ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#ff4b4b";
-        ctx.font = "bold 26px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 25);
-
-        ctx.fillStyle = "#fff";
-        ctx.font = "16px sans-serif";
-        ctx.fillText(`Tổng điểm: ${score}`, canvas.width / 2, canvas.height / 2 + 10);
-        
-        document.getElementById("startBtn").style.display = "block";
-        document.getElementById("startBtn").textContent = "Chơi Lại 🚀";
-        ctx.textAlign = "start";
-    }
-
-    window.addEventListener("keydown", (e) => {
-        if (!isPlaying) return;
-        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
-        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
-        if (e.key === " " || e.key === "ArrowUp") {
-            bullets.push({ x: player.x + player.width / 2, y: player.y });
-            e.preventDefault();
-        }
-    });
-
-    window.addEventListener("keyup", (e) => {
-        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
-        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
-    });
-
-    canvas.addEventListener("click", () => {
-        canvas.focus();
-    });
-
-    draw();
-</script>
-
-</body>
-</html>
-"""
-
-components.html(space_shooter_code, height=530)
