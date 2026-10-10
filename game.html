@@ -55,7 +55,7 @@
 
 <div class="container">
     <div class="menu-screen" id="menuScreen">
-        <h1>⚡ GALAXY EPIC STRIKE 🚀</h1>
+        <h1>⚡ GALAXY PIXEL STRIKE 🚀</h1>
         <div class="subtitle">Mũi tên/A-D di chuyển • Phím Cách bắn Laser hủy diệt</div>
         <button class="menu-btn" onclick="startGame()">CHIẾN NGAY ▶</button>
     </div>
@@ -76,7 +76,7 @@
     const menuScreen = document.getElementById("menuScreen");
 
     let score = 0, lives = 3, isPlaying = false, gameInterval = null;
-    let player = { x: 175, y: 420, width: 50, height: 46, speed: 6.5, dx: 0 };
+    let player = { x: 175, y: 420, width: 44, height: 44, speed: 6.5, dx: 0 };
     let bullets = [], enemies = [], stars = [], particles = [], enemyDirection = 1;
 
     for(let i=0; i<80; i++) {
@@ -94,7 +94,7 @@
         let rows = 3, cols = 5, startX = 45, startY = 60, spacingX = 64, spacingY = 52;
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 44, height: 36, alive: true, anim: Math.random() * Math.PI });
+                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 40, height: 36, alive: true, anim: Math.random() * Math.PI });
             }
         }
     }
@@ -208,117 +208,82 @@
             ctx.restore();
         });
 
-        // --- TIA LASER KHỦNG KHIẾP TỪ PHI THUYỀN BẮN LÊN (Đúng như ảnh mẫu) ---
+        // --- VẼ TIA LASER KHỦNG KHIẾP ---
         ctx.save();
         ctx.shadowBlur = 25;
         ctx.shadowColor = "#ffaa00";
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(player.x + player.width/2 - 6, 0, 12, player.y);
+        ctx.fillRect(player.x + player.width/2 - 4, 0, 8, player.y);
         ctx.fillStyle = "#ffaa00";
-        ctx.fillRect(player.x + player.width/2 - 3, 0, 6, player.y);
+        ctx.fillRect(player.x + player.width/2 - 2, 0, 4, player.y);
         ctx.restore();
 
-        // --- PHI THUYỀN CHIẾN ĐẤU CAO CẤP (Skin Xanh Ngọc Tinh Xảo) ---
+        // --- HÀM VẼ TÀU NGƯỜI CHƠI (PLAYER - PIXEL ART STYLE) ---
         let px = player.x, py = player.y;
+        let ps = 3; // Kích thước mỗi khối pixel
 
-        // Động cơ phản lực phun lửa vàng rực
+        // Động cơ phun lửa
         ctx.fillStyle = "#ff5500";
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "#ff5500";
-        ctx.fillRect(px + 12, py + player.height, 8, 12 + Math.random() * 8);
-        ctx.fillRect(px + player.width - 20, py + player.height, 8, 12 + Math.random() * 8);
-        ctx.shadowBlur = 0;
+        ctx.fillRect(px + ps*3, py + ps*13, ps*2, ps*2);
+        ctx.fillRect(px + ps*8, py + ps*13, ps*2, ps*2);
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillRect(px + ps*4, py + ps*14, ps, ps);
+        ctx.fillRect(px + ps*9, py + ps*14, ps, ps);
 
-        // Cánh phụ hai bên
-        ctx.fillStyle = "#00b4d8";
-        ctx.beginPath();
-        ctx.moveTo(px + 4, py + 24);
-        ctx.lineTo(px - 6, py + 38);
-        ctx.lineTo(px + 14, py + 32);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(px + player.width - 4, py + 24);
-        ctx.lineTo(px + player.width + 6, py + 38);
-        ctx.lineTo(px + player.width - 14, py + 32);
-        ctx.closePath();
-        ctx.fill();
-
-        // Thân chính tàu hầm hố màu xanh ngọc
+        // Thân tàu chính & Cánh vát nhọn
         ctx.fillStyle = "#0077b6";
-        ctx.beginPath();
-        ctx.moveTo(px + player.width / 2, py);
-        ctx.lineTo(px + 10, py + player.height);
-        ctx.lineTo(px + player.width - 10, py + player.height);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillRect(px + ps*4, py + ps*3, ps*5, ps*10);
+        ctx.fillStyle = "#00b4d8";
+        ctx.fillRect(px + ps*5, py + ps*2, ps*3, ps*3);
+        
+        // Cánh hai bên
+        ctx.fillStyle = "#ff007f";
+        ctx.fillRect(px + ps*2, py + ps*6, ps*3, ps*4);
+        ctx.fillRect(px + ps, py + ps*8, ps*2, ps*3);
+        ctx.fillRect(px + ps*8, py + ps*6, ps*3, ps*4);
+        ctx.fillRect(px + ps*10, py + ps*8, ps*2, ps*3);
 
-        // Viền giáp sáng bóng
-        ctx.fillStyle = "#90e0ef";
-        ctx.beginPath();
-        ctx.moveTo(px + player.width / 2, py + 4);
-        ctx.lineTo(px + 14, py + player.height - 4);
-        ctx.lineTo(px + player.width - 14, py + player.height - 4);
-        ctx.closePath();
-        ctx.fill();
+        // Đại bác plasma gắn trên cánh
+        ctx.fillStyle = "#00f0ff";
+        ctx.fillRect(px + ps, py + ps*7, ps, ps*2);
+        ctx.fillRect(px + ps*11, py + ps*7, ps, ps*2);
 
-        // Buồng lái năng lượng vàng phát sáng
+        // Buồng lái phát sáng
         ctx.fillStyle = "#ffb703";
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "#ffb703";
-        ctx.beginPath();
-        ctx.ellipse(px + player.width / 2, py + 22, 6, 14, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillRect(px + ps*5, py + ps*3, ps*3, ps*3);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + ps*6, py + ps*4, ps, ps);
 
         // Đạn laser nhỏ hai bên
         ctx.fillStyle = "#ffaa00";
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#ffaa00";
         bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 16); });
-        ctx.shadowBlur = 0;
 
-        // --- QUÁI VẬT CÔN TRÙNG KHÔNG GIAN (Chi tiết, rực rỡ) ---
+        // --- HÀM VẼ QUÁI VẬT NGOÀI HÀNH TINH (ALIEN - PIXEL ART STYLE) ---
         enemies.forEach(e => {
             if (!e.alive) return;
             let ex = e.x, ey = e.y + Math.sin(e.anim) * 3;
+            let es = 2.5; // Kích thước pixel của địch
 
-            // Cánh côn trùng pha hồng / vàng cam rực rỡ
+            // Cánh côn trùng ngoài hành tinh rực rỡ
             ctx.fillStyle = "#ff007f";
-            ctx.beginPath();
-            ctx.moveTo(ex + 4, ey + 10);
-            ctx.lineTo(ex - 16, ey - 4);
-            ctx.lineTo(ex + 10, ey + 22);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(ex + e.width - 4, ey + 10);
-            ctx.lineTo(ex + e.width + 16, ey - 4);
-            ctx.lineTo(ex + e.width - 10, ey + 22);
-            ctx.closePath();
-            ctx.fill();
+            ctx.fillRect(ex + es, ey + es*3, es*3, es*3);
+            ctx.fillRect(ex - es*2, ey + es, es*3, es*2);
+            ctx.fillRect(ex + es*11, ey + es*3, es*3, es*3);
+            ctx.fillRect(ex + es*13, ey + es, es*3, es*2);
 
             // Thân chính côn trùng
             ctx.fillStyle = "#7209b7";
-            ctx.beginPath();
-            ctx.ellipse(ex + e.width/2, ey + e.height/2, 16, 14, 0, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillRect(ex + es*3, ey + es*2, es*9, es*9);
 
-            // Giáp đầu phát sáng màu vàng cam
+            // Giáp đầu màu vàng cam
             ctx.fillStyle = "#f77f00";
-            ctx.beginPath();
-            ctx.ellipse(ex + e.width/2, ey + 8, 10, 8, 0, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillRect(ex + es*4, ey + es, es*7, es*4);
 
             // Mắt thần xanh ngọc độc ác
             ctx.fillStyle = "#00f0ff";
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 6;
             ctx.shadowColor = "#00f0ff";
-            ctx.beginPath();
-            ctx.arc(ex + e.width/2, ey + 8, 4, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillRect(ex + es*6, ey + es*2, es*3, es*3);
             ctx.shadowBlur = 0;
         });
     }
