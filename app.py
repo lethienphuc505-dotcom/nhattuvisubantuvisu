@@ -257,4 +257,4 @@ space_menu_code = """
         ctx.fill();
 
         ctx.fillStyle = "#7000ff";
-        ctx.fillRect(px, py + 18, 8, 12);
+        ctx.fillRect(px, py + 18, 8, 12)
