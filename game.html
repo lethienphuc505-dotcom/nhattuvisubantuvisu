@@ -49,7 +49,6 @@
     const scoreElement = document.getElementById("score");
     const livesElement = document.getElementById("lives");
 
-    // Trạng thái game: 'menu' | 'difficulty' | 'playing' | 'gameover'
     let gameState = 'menu';
     let score = 0, lives = 3, difficulty = 'normal';
     let player = { x: 175, y: 410, width: 48, height: 48, speed: 6.5, dx: 0 };
@@ -109,14 +108,14 @@
         }
     }
 
-    // Xử lý sự kiện bấm chuột trực tiếp trên Canvas (Không bao giờ lo bị kẹt nút)
+    // Bắt sự kiện click trên Canvas cực kỳ chuẩn xác
     canvas.addEventListener("click", (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
         if (gameState === 'menu') {
-            // Nút PLAY (Vùng x: 100->300, y: 280->330)
+            // Nút PLAY (x: 100->300, y: 280->330)
             if (mouseX >= 100 && mouseX <= 300 && mouseY >= 280 && mouseY <= 330) {
                 gameState = 'difficulty';
             }
@@ -141,7 +140,7 @@
         }
     });
 
-    // Main Game Loop chạy 60 FPS
+    // Vòng lặp game chạy liên tục 60 FPS
     setInterval(() => {
         update();
         draw();
@@ -226,3 +225,72 @@
 
         stars.forEach(star => {
             star.y += star.speed;
+            if (star.y > canvas.height) star.y = 0;
+        });
+    }
+
+    function draw() {
+        ctx.fillStyle = "#020408";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        stars.forEach(star => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+            ctx.fillRect(star.x, star.y, star.size, star.size);
+        });
+
+        particles.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+
+        if (gameState === 'playing') {
+            // --- TIA LASER HUỶ DIỆT ---
+            ctx.save();
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = "#ffaa00";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(player.x + player.width/2 - 4, 0, 8, player.y);
+            ctx.fillStyle = "#ffaa00";
+            ctx.fillRect(player.x + player.width/2 - 2, 0, 4, player.y);
+            ctx.restore();
+
+            // --- VẼ CHIẾN TÀU PLAYER ---
+            let px = player.x, py = player.y;
+            let s = 1.5;
+
+            ctx.save();
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = "#ff5500";
+            ctx.fillStyle = "#ff5500";
+            let flameHeight = (6 + Math.random() * 8) * s;
+            ctx.fillRect(px + 12*s, py + 29*s, 2*s, flameHeight);
+            ctx.fillRect(px + 18*s, py + 29*s, 2*s, flameHeight);
+            ctx.fillStyle = "#ffcc00";
+            ctx.fillRect(px + 13*s, py + 31*s, 1*s, flameHeight * 0.6);
+            ctx.fillRect(px + 18*s, py + 31*s, 1*s, flameHeight * 0.6);
+            ctx.restore();
+
+            ctx.fillStyle = "#ff5500";
+            ctx.fillRect(px + 12*s, py + 25*s, 2*s, 4*s);
+            ctx.fillRect(px + 18*s, py + 25*s, 2*s, 4*s);
+            ctx.fillStyle = "#ff0055";
+            ctx.fillRect(px + 11*s, py + 23*s, 3*s, 2*s);
+            ctx.fillRect(px + 18*s, py + 23*s, 3*s, 2*s);
+
+            ctx.fillStyle = "#00ffff";
+            ctx.fillRect(px + 15*s, py + 1*s, 2*s, 3*s);
+            ctx.fillStyle = "#00b4d8";
+            ctx.fillRect(px + 14*s, py + 4*s, 4*s, 3*s);
+            ctx.fillStyle = "#0077b6";
+            ctx.fillRect(px + 13*s, py + 7*s, 6*s, 5*s);
+            ctx.fillStyle = "#03045e";
+            ctx.fillRect(px + 12*s, py + 12*s, 8*s, 7*s);
+            ctx.fillStyle = "#00b4d8";
+            ctx.fillRect(px + 13*s, py + 13*s,
