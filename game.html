@@ -38,7 +38,7 @@
     <div class="hud">
         <div>Điểm: <span id="score" style="color: #00f0ff;">0</span></div>
         <div id="stageIndicator" style="color: #ffb703;">GIAI ĐOẠN 1</div>
-        <div>Mạng: <span id="lives" style="color: #ff3366;">❤️❤️❤️</span></div>
+        <div>Mạng: <span id="lives" style="color: #ff3366;">3</span></div>
     </div>
 
     <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
@@ -53,8 +53,12 @@
 
     let gameState = 'menu';
     let score = 0, lives = 3, difficulty = 'normal', currentStage = 1;
-    let player = { x: 175, y: 440, width: 48, height: 48, speed: 6.5, dx: 0 };
-    let bullets = [], enemies = [], stars = [], particles = [], enemyBullets = [], boss = null;
+    let player = { 
+        x: 175, y: 440, width: 48, height: 48, speed: 6.5, dx: 0,
+        powerDouble: false, powerFast: false, powerTimer: 0 
+    };
+    let bullets = [], enemies = [], stars = [], particles = [], enemyBullets = [], powerUps = [], boss = null;
+    let shootCooldown = 0;
 
     for(let i=0; i<80; i++) {
         stars.push({
@@ -70,29 +74,20 @@
         enemies = [];
         boss = null;
         if (currentStage === 1) {
-            stageIndicator.textContent = "GIAI ĐOẠN 1 (5 QUÁI)";
-            // Tạo 5 con alien di chuyển tự do
+            stageIndicator.textContent = "GIAI ĐOẠN 1";
             for (let i = 0; i < 5; i++) {
                 enemies.push(createFreeAlien());
             }
         } else if (currentStage === 2) {
-            stageIndicator.textContent = "GIAI ĐOẠN 2 (10 QUÁI)";
-            // Tạo 10 con alien di chuyển tự do
+            stageIndicator.textContent = "GIAI ĐOẠN 2";
             for (let i = 0; i < 10; i++) {
                 enemies.push(createFreeAlien());
             }
         } else if (currentStage === 3) {
-            stageIndicator.textContent = "FINAL BOSS 👾";
-            // Tạo Boss cuối
+            stageIndicator.textContent = "TRẬN CHIẾN BOSS";
             boss = {
-                x: 160,
-                y: 60,
-                width: 80,
-                height: 60,
-                hp: 30,
-                maxHp: 30,
-                dx: 1.5,
-                anim: 0
+                x: 160, y: 60, width: 80, height: 60,
+                hp: 35, maxHp: 35, dx: 1.5, anim: 0
             };
         }
     }
@@ -101,12 +96,12 @@
         return {
             x: Math.random() * (canvas.width - 60) + 30,
             y: Math.random() * 120 + 40,
-            vx: (Math.random() - 0.5) * 2.5,
-            vy: (Math.random() - 0.2) * 1.5 + 0.5,
-            width: 42,
-            height: 38,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.2) * 1.2 + 0.4,
+            width: 42, height: 38,
             alive: true,
-            anim: Math.random() * Math.PI * 2
+            anim: Math.random() * Math.PI * 2,
+            speedOffset: 0.7 + Math.random() * 0.5
         };
     }
 
@@ -116,7 +111,8 @@
         score = 0; 
         lives = (difficulty === 'hard') ? 2 : 3; 
         currentStage = 1;
-        bullets = []; enemyBullets = []; particles = []; player.x = 175;
+        bullets = []; enemyBullets = []; particles = []; powerUps = []; 
+        player.x = 175; player.powerDouble = false; player.powerFast = false;
         scoreElement.textContent = score; 
         updateLivesDisplay(); 
         initStage();
@@ -124,23 +120,19 @@
     }
 
     function updateLivesDisplay() {
-        let hearts = "";
-        for(let i=0; i<lives; i++) hearts += "❤️";
-        livesElement.textContent = hearts;
+        livesElement.textContent = lives;
     }
 
     function addExplosion(x, y, color) {
-        for(let i=0; i<14; i++) {
+        for(let i=0; i<12; i++) {
             let angle = Math.random() * Math.PI * 2;
-            let speed = Math.random() * 3.5 + 1;
+            let speed = Math.random() * 3 + 1;
             particles.push({
                 x: x, y: y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                radius: Math.random() * 3 + 1,
-                color: color,
-                alpha: 1,
-                decay: Math.random() * 0.03 + 0.02
+                radius: Math.random() * 2.5 + 1,
+                color: color, alpha: 1, decay: 0.03
             });
         }
     }
@@ -171,69 +163,58 @@
     function update() {
         if (gameState !== 'playing') return;
 
+        if (shootCooldown > 0) shootCooldown--;
+
+        // Thời gian hiệu lực vật phẩm
+        if (player.powerFast || player.powerDouble) {
+            player.powerTimer--;
+            if (player.powerTimer <= 0) {
+                player.powerFast = false;
+                player.powerDouble = false;
+            }
+        }
+
         player.x += player.dx;
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
         // Đạn người chơi
         for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].y -= 10;
+            bullets[i].y -= 11;
             if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // --- XỬ LÝ GIAI ĐOẠN 1 & 2 (QUÁI BAY TỰ DO) ---
-        if (currentStage === 1 || currentStage === 2) {
-            let shootChance = currentStage === 1 ? 0.015 : 0.03;
-            if (Math.random() < shootChance) {
-                let activeEnemies = enemies.filter(e => e.alive);
-                if (activeEnemies.length > 0) {
-                    let shooter = activeEnemies[Math.floor(Math.random() * activeEnemies.length)];
-                    enemyBullets.push({ x: shooter.x + shooter.width/2, y: shooter.y + shooter.height, speed: 4 });
-                }
-            }
-
-            let aliveCount = 0;
-            enemies.forEach(e => {
-                if (!e.alive) return;
-                aliveCount++;
+        // Cập nhật vật phẩm rơi
+        for (let i = powerUps.length - 1; i >= 0; i--) {
+            powerUps[i].y += 2;
+            // Kiểm tra nhặt vật phẩm
+            if (powerUps[i].x > player.x && powerUps[i].x < player.x + player.width &&
+                powerUps[i].y > player.y && powerUps[i].y < player.y + player.height) {
                 
-                // Di chuyển tự do lượn lách
-                e.x += e.vx;
-                e.y += e.vy;
-                e.anim += 0.05;
-
-                // Va đập biên ngang
-                if (e.x <= 10 || e.x + e.width >= canvas.width - 10) e.vx *= -1;
-                // Giới hạn biên dọc ở phần trên
-                if (e.y <= 30 || e.y >= 300) e.vy *= -1;
-
-                // Nếu lọt qua sau lưng người chơi
-                if (e.y > player.y) {
-                    e.alive = false;
-                    lives--;
+                let type = powerUps[i].type;
+                if (type === 'hp') {
+                    lives++;
                     updateLivesDisplay();
-                    addExplosion(e.x + e.width/2, e.y, "#ff3366");
-                    if (lives <= 0) endGame();
+                } else if (type === 'double') {
+                    player.powerDouble = true;
+                    player.powerTimer = 450; // Khoảng 7.5 giây
+                } else if (type === 'fast') {
+                    player.powerFast = true;
+                    player.powerTimer = 450;
                 }
-            });
-
-            // Kiểm tra hoàn thành stage
-            if (aliveCount === 0) {
-                currentStage++;
-                initStage();
+                powerUps.splice(i, 1);
+            } else if (powerUps[i].y > canvas.height) {
+                powerUps.splice(i, 1);
             }
-        } 
-        // --- XỬ LÝ GIAI ĐOẠN CUỐI (BOSS STAGE) ---
-        else if (currentStage === 3 && boss) {
-            boss.x += boss.dx;
-            boss.anim += 0.05;
-            if (boss.x <= 15 || boss.x + boss.width >= canvas.width - 15) boss.dx *= -1;
+        }
 
-            // Boss bắn đạn chùm
-            if (Math.random() < 0.04) {
-                enemyBullets.push({ x: boss.x + 20, y: boss.y + boss.height, speed: 5 });
-                enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, speed: 5.5 });
-                enemyBullets.push({ x: boss.x + boss.width - 20, y: boss.y + boss.height, speed: 5 });
+        // Tốc độ bắn laser của địch đã được giảm xuống thấp và chậm rãi hơn
+        let alienShootChance = currentStage === 1 ? 0.006 : 0.012;
+        if (Math.random() < alienShootChance) {
+            let activeEnemies = enemies.filter(e => e.alive);
+            if (activeEnemies.length > 0) {
+                let shooter = activeEnemies[Math.floor(Math.random() * activeEnemies.length)];
+                enemyBullets.push({ x: shooter.x + shooter.width/2, y: shooter.y + shooter.height, speed: 3.2 });
             }
         }
 
@@ -252,21 +233,70 @@
             }
         }
 
-        // Va chạm đạn người chơi với quái thường
+        // Xử lý Giai đoạn 1 & 2
+        if (currentStage === 1 || currentStage === 2) {
+            let aliveCount = 0;
+            enemies.forEach(e => {
+                if (!e.alive) return;
+                aliveCount++;
+                
+                e.x += e.vx;
+                e.y += e.vy;
+                e.anim += 0.04;
+
+                if (e.x <= 10 || e.x + e.width >= canvas.width - 10) e.vx *= -1;
+                if (e.y <= 30 || e.y >= 280) e.vy *= -1;
+
+                // Lọt qua sau lưng mất 1 mạng
+                if (e.y > player.y) {
+                    e.alive = false;
+                    lives--;
+                    updateLivesDisplay();
+                    addExplosion(e.x + e.width/2, e.y, "#ff3366");
+                    if (lives <= 0) endGame();
+                }
+            });
+
+            if (aliveCount === 0) {
+                currentStage++;
+                initStage();
+            }
+        } 
+        // Xử lý Boss Stage
+        else if (currentStage === 3 && boss) {
+            boss.x += boss.dx;
+            boss.anim += 0.05;
+            if (boss.x <= 15 || boss.x + boss.width >= canvas.width - 15) boss.dx *= -1;
+
+            if (Math.random() < 0.025) {
+                enemyBullets.push({ x: boss.x + 20, y: boss.y + boss.height, speed: 4 });
+                enemyBullets.push({ x: boss.x + boss.width - 20, y: boss.y + boss.height, speed: 4 });
+            }
+        }
+
+        // Va chạm đạn người chơi với quái và boss
         for (let i = bullets.length - 1; i >= 0; i--) {
             let bulletHit = false;
             
-            // Đánh quái thường
             for (let j = 0; j < enemies.length; j++) {
                 let e = enemies[j];
                 if (e.alive && bullets[i].x > e.x && bullets[i].x < e.x + e.width && bullets[i].y > e.y && bullets[i].y < e.y + e.height) {
-                    e.alive = false; bulletHit = true; score += 20; scoreElement.textContent = score;
+                    e.alive = false; 
+                    bulletHit = true; 
+                    score += 20; 
+                    scoreElement.textContent = score;
                     addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
+
+                    // Tỷ lệ rơi vật phẩm (khoảng 30%)
+                    if (Math.random() < 0.3) {
+                        let rand = Math.random();
+                        let pType = rand < 0.35 ? 'hp' : (rand < 0.7 ? 'double' : 'fast');
+                        powerUps.push({ x: e.x + e.width/2, y: e.y, type: pType });
+                    }
                     break;
                 }
             }
 
-            // Đánh Boss
             if (!bulletHit && boss && bullets[i].x > boss.x && bullets[i].x < boss.x + boss.width && bullets[i].y > boss.y && bullets[i].y < boss.y + boss.height) {
                 bulletHit = true;
                 boss.hp--;
@@ -325,9 +355,24 @@
             bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 12); });
             ctx.restore();
 
+            // Vật phẩm rơi
+            powerUps.forEach(p => {
+                ctx.save();
+                ctx.shadowBlur = 10;
+                if (p.type === 'hp') { ctx.fillStyle = "#ff3366"; }
+                else if (p.type === 'double') { ctx.fillStyle = "#ffb703"; }
+                else { ctx.fillStyle = "#06d6a0"; }
+                ctx.fillRect(p.x - 8, p.y - 8, 16, 16);
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 10px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(p.type === 'hp' ? "+HP" : (p.type === 'double' ? "2X" : "FAST"), p.x, p.y + 4);
+                ctx.restore();
+            });
+
             // Đạn địch
             ctx.save();
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 8;
             ctx.shadowColor = "#ff3366";
             ctx.fillStyle = "#ff3366";
             enemyBullets.forEach(eb => { ctx.fillRect(eb.x - 2, eb.y, 4, 10); });
@@ -402,13 +447,7 @@
             ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
             ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
 
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(px + 15*s, py + 2*s, 1*s, 1*s);
-            ctx.fillStyle = "#90e0ef";
-            ctx.fillRect(px + 14*s, py + 9*s, 1*s, 2*s);
-            ctx.fillRect(px + 17*s, py + 9*s, 1*s, 2*s);
-
-            // Vẽ quái thường (Stage 1 & 2)
+            // Vẽ quái thường
             if (currentStage === 1 || currentStage === 2) {
                 enemies.forEach(e => {
                     if (!e.alive) return;
@@ -443,10 +482,9 @@
                     ctx.fillRect(ex + 17*es, ey + 9*es, 3*es, 2*es);
                 });
             } 
-            // Vẽ Boss (Stage 3)
+            // Vẽ Boss
             else if (currentStage === 3 && boss) {
-                let bx = boss.x, by = boss.y;
-                let bs = 2.2;
+                let bx = boss.x, by = boss.y, bs = 2.2;
                 
                 ctx.save();
                 ctx.shadowBlur = 20;
@@ -456,13 +494,11 @@
                 ctx.fillStyle = "#7209b7";
                 ctx.fillRect(bx + 8*bs, by + 6*bs, 20*bs, 14*bs);
 
-                // Mắt Boss phát sáng đỏ
                 ctx.fillStyle = "#ff0055";
                 ctx.fillRect(bx + 11*bs, by + 10*bs, 4*bs, 5*bs);
                 ctx.fillRect(bx + 21*bs, by + 10*bs, 4*bs, 5*bs);
                 ctx.restore();
 
-                // Thanh máu Boss
                 ctx.fillStyle = "#333";
                 ctx.fillRect(bx, by - 12, boss.width, 6);
                 ctx.fillStyle = "#ff3366";
@@ -474,22 +510,22 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.fillStyle = "#00f0ff";
-            ctx.font = "bold 24px 'Plus Jakarta Sans'";
+            ctx.font = "bold 22px 'Plus Jakarta Sans'";
             ctx.textAlign = "center";
             ctx.shadowBlur = 15;
             ctx.shadowColor = "#00f0ff";
-            ctx.fillText("⚡ GALAXY PIXEL STRIKE 🚀", canvas.width / 2, 180);
+            ctx.fillText("GALAXY PIXEL STRIKE", canvas.width / 2, 180);
             ctx.shadowBlur = 0;
 
             ctx.fillStyle = "#8892b0";
             ctx.font = "12px 'Plus Jakarta Sans'";
-            ctx.fillText("Dùng Mũi tên/A-D di chuyển • Phím Cách bắn Đạn", canvas.width / 2, 220);
+            ctx.fillText("Dung A-D hoac Mui ten de di chuyen • Phim Cach ban dan", canvas.width / 2, 220);
 
             ctx.fillStyle = "#00f0ff";
             ctx.fillRect(100, 280, 200, 50);
             ctx.fillStyle = "#020408";
             ctx.font = "bold 18px 'Plus Jakarta Sans'";
-            ctx.fillText("PLAY ▶", canvas.width / 2, 312);
+            ctx.fillText("PLAY", canvas.width / 2, 312);
         }
         else if (gameState === 'difficulty') {
             ctx.fillStyle = "rgba(2, 4, 8, 0.96)";
@@ -498,7 +534,7 @@
             ctx.fillStyle = "#00f0ff";
             ctx.font = "bold 22px 'Plus Jakarta Sans'";
             ctx.textAlign = "center";
-            ctx.fillText("CHỌN ĐỘ KHÓ", canvas.width / 2, 140);
+            ctx.fillText("CHON DO KHO", canvas.width / 2, 140);
             
             ctx.fillStyle = "#8892b0";
             ctx.font = "13px 'Plus Jakarta Sans'";
@@ -529,18 +565,18 @@
             ctx.textAlign = "center";
             ctx.shadowBlur = 15;
             ctx.shadowColor = ctx.fillStyle;
-            ctx.fillText(gameState === 'victory' ? "CHIẾN THẮNG! 🏆" : "TRÒ CHƠI KẾT THÚ 💀", canvas.width / 2, 180);
+            ctx.fillText(gameState === 'victory' ? "CHIEN THANG" : "TRO CHOI KET THU", canvas.width / 2, 180);
             ctx.shadowBlur = 0;
 
             ctx.fillStyle = "#fff";
             ctx.font = "16px 'Plus Jakarta Sans'";
-            ctx.fillText("Tổng điểm: " + score, canvas.width / 2, 230);
+            ctx.fillText("Tong diem: " + score, canvas.width / 2, 230);
 
             ctx.fillStyle = "#00f0ff";
             ctx.fillRect(100, 310, 200, 50);
             ctx.fillStyle = "#020408";
             ctx.font = "bold 16px 'Plus Jakarta Sans'";
-            ctx.fillText("CHƠI LẠI 🔄", canvas.width / 2, 342);
+            ctx.fillText("CHOI LAI", canvas.width / 2, 342);
         }
     }
 
@@ -553,7 +589,16 @@
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
         if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
         if (e.key === " " || e.key === "ArrowUp") {
-            bullets.push({ x: player.x + player.width / 2, y: player.y });
+            let limitCooldown = player.powerFast ? 8 : 15;
+            if (shootCooldown <= 0) {
+                if (player.powerDouble) {
+                    bullets.push({ x: player.x + 12, y: player.y });
+                    bullets.push({ x: player.x + player.width - 12, y: player.y });
+                } else {
+                    bullets.push({ x: player.x + player.width / 2, y: player.y });
+                }
+                shootCooldown = limitCooldown;
+            }
             e.preventDefault();
         }
     });
