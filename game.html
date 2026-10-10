@@ -24,14 +24,14 @@
             overflow: hidden;
         }
         .menu-screen {
-            position: absolute; width: 100%; height: 100%;
-            background: rgba(2, 4, 8, 0.96);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 4, 8, 0.98);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10; transition: opacity 0.3s ease;
+            z-index: 50; pointer-events: auto; transition: opacity 0.3s ease;
         }
         .menu-screen.hidden { opacity: 0; pointer-events: none; }
         
-        h1 { color: #00f0ff; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 20px rgba(0,240,255,0.8); text-align: center; }
+        h1 { color: #00f0ff; font-size: 24px; margin-bottom: 5px; text-shadow: 0 0 20px rgba(0,240,255,0.8); text-align: center; }
         .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }
         
         .menu-btn {
@@ -43,6 +43,8 @@
             transition: transform 0.1s, filter 0.2s;
             text-transform: uppercase;
             letter-spacing: 1px;
+            z-index: 51;
+            position: relative;
         }
         .menu-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
         .menu-btn:active { transform: scale(0.95); }
@@ -57,7 +59,7 @@
             font-size: 15px; font-weight: bold; z-index: 5;
             text-shadow: 0 2px 6px rgba(0,0,0,0.9);
         }
-        canvas { outline: none; }
+        canvas { outline: none; position: relative; z-index: 1; }
     </style>
 </head>
 <body>
@@ -109,14 +111,16 @@
         });
     }
 
-    document.getElementById("playBtn").addEventListener("click", () => {
+    // Đảm bảo bắt sự kiện click chuẩn xác nhất bằng cả onclick và addEventListener
+    document.getElementById("playBtn").onclick = function(e) {
+        e.stopPropagation();
         mainMenu.classList.add("hidden");
         difficultyMenu.classList.remove("hidden");
-    });
+    };
 
-    document.getElementById("btnEasy").addEventListener("click", () => startGame('easy'));
-    document.getElementById("btnNormal").addEventListener("click", () => startGame('normal'));
-    document.getElementById("btnHard").addEventListener("click", () => startGame('hard'));
+    document.getElementById("btnEasy").onclick = function(e) { e.stopPropagation(); startGame('easy'); };
+    document.getElementById("btnNormal").onclick = function(e) { e.stopPropagation(); startGame('normal'); };
+    document.getElementById("btnHard").onclick = function(e) { e.stopPropagation(); startGame('hard'); };
 
     function createEnemies() {
         enemies = [];
@@ -199,111 +203,4 @@
         }
 
         let hitEdge = false, aliveCount = 0;
-        let enemySpeed = difficulty === 'easy' ? 0.8 : (difficulty === 'normal' ? 1.1 : 1.5);
-        
-        enemies.forEach(e => {
-            if (!e.alive) return;
-            aliveCount++;
-            e.x += enemySpeed * enemyDirection;
-            e.anim += 0.08;
-            if (e.x <= 15 || e.x + e.width >= canvas.width - 15) hitEdge = true;
-        });
-
-        if (hitEdge) {
-            enemyDirection *= -1;
-            enemies.forEach(e => {
-                e.y += 14;
-                if (e.y + e.height >= player.y) endGame();
-            });
-        }
-
-        if (aliveCount === 0) createEnemies();
-
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            let bulletHit = false;
-            for (let j = 0; j < enemies.length; j++) {
-                let e = enemies[j];
-                if (e.alive && bullets[i].x > e.x && bullets[i].x < e.x + e.width && bullets[i].y > e.y && bullets[i].y < e.y + e.height) {
-                    e.alive = false; bulletHit = true; score += 20; scoreElement.textContent = score;
-                    addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
-                    break;
-                }
-            }
-            if (bulletHit) bullets.splice(i, 1);
-        }
-
-        for (let i = particles.length - 1; i >= 0; i--) {
-            particles[i].x += particles[i].vx;
-            particles[i].y += particles[i].vy;
-            particles[i].alpha -= particles[i].decay;
-            if (particles[i].alpha <= 0) particles.splice(i, 1);
-        }
-
-        stars.forEach(star => {
-            star.y += star.speed;
-            if (star.y > canvas.height) star.y = 0;
-        });
-    }
-
-    function draw() {
-        ctx.fillStyle = "#020408";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        stars.forEach(star => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-            ctx.fillRect(star.x, star.y, star.size, star.size);
-        });
-
-        particles.forEach(p => {
-            ctx.save();
-            ctx.globalAlpha = p.alpha;
-            ctx.fillStyle = p.color;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        });
-
-        // --- TIA LASER HUỶ DIỆT ---
-        ctx.save();
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = "#ffaa00";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(player.x + player.width/2 - 4, 0, 8, player.y);
-        ctx.fillStyle = "#ffaa00";
-        ctx.fillRect(player.x + player.width/2 - 2, 0, 4, player.y);
-        ctx.restore();
-
-        // --- VẼ CHIẾN TÀU PLAYER ---
-        let px = player.x, py = player.y;
-        let s = 1.5;
-
-        ctx.save();
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "#ff5500";
-        ctx.fillStyle = "#ff5500";
-        let flameHeight = (6 + Math.random() * 8) * s;
-        ctx.fillRect(px + 12*s, py + 29*s, 2*s, flameHeight);
-        ctx.fillRect(px + 18*s, py + 29*s, 2*s, flameHeight);
-        ctx.fillStyle = "#ffcc00";
-        ctx.fillRect(px + 13*s, py + 31*s, 1*s, flameHeight * 0.6);
-        ctx.fillRect(px + 18*s, py + 31*s, 1*s, flameHeight * 0.6);
-        ctx.restore();
-
-        ctx.fillStyle = "#ff5500";
-        ctx.fillRect(px + 12*s, py + 25*s, 2*s, 4*s);
-        ctx.fillRect(px + 18*s, py + 25*s, 2*s, 4*s);
-        ctx.fillStyle = "#ff0055";
-        ctx.fillRect(px + 11*s, py + 23*s, 3*s, 2*s);
-        ctx.fillRect(px + 18*s, py + 23*s, 3*s, 2*s);
-
-        ctx.fillStyle = "#00ffff";
-        ctx.fillRect(px + 15*s, py + 1*s, 2*s, 3*s);
-        ctx.fillStyle = "#00b4d8";
-        ctx.fillRect(px + 14*s, py + 4*s, 4*s, 3*s);
-        ctx.fillStyle = "#0077b6";
-        ctx.fillRect(px + 13*s, py + 7*s, 6*s, 5*s);
-        ctx.fillStyle = "#03045e";
-        ctx.
+        let enemySpeed = difficulty === 'easy' ? 0.8 : (difficulty
