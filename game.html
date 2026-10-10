@@ -109,7 +109,6 @@
         });
     }
 
-    // Gắn sự kiện click trực tiếp qua JS để tránh xung đột
     document.getElementById("playBtn").addEventListener("click", () => {
         mainMenu.classList.add("hidden");
         difficultyMenu.classList.remove("hidden");
@@ -125,7 +124,7 @@
         let cols = 5, startX = 45, startY = 60, spacingX = 64, spacingY = 52;
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 40, height: 36, alive: true, anim: Math.random() * Math.PI });
+                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 42, height: 38, alive: true, anim: Math.random() * Math.PI });
             }
         }
     }
@@ -206,7 +205,7 @@
             if (!e.alive) return;
             aliveCount++;
             e.x += enemySpeed * enemyDirection;
-            e.anim += 0.06;
+            e.anim += 0.08;
             if (e.x <= 15 || e.x + e.width >= canvas.width - 15) hitEdge = true;
         });
 
@@ -307,117 +306,4 @@
         ctx.fillStyle = "#0077b6";
         ctx.fillRect(px + 13*s, py + 7*s, 6*s, 5*s);
         ctx.fillStyle = "#03045e";
-        ctx.fillRect(px + 12*s, py + 12*s, 8*s, 7*s);
-        ctx.fillStyle = "#00b4d8";
-        ctx.fillRect(px + 13*s, py + 13*s, 6*s, 5*s);
-
-        ctx.save();
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "#ffb703";
-        ctx.fillStyle = "#ffb703";
-        ctx.fillRect(px + 15*s, py + 6*s, 2*s, 4*s);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(px + 15*s, py + 7*s, 1*s, 2*s);
-        ctx.restore();
-
-        ctx.fillStyle = "#ff007f";
-        ctx.fillRect(px + 9*s, py + 13*s, 3*s, 4*s);
-        ctx.fillRect(px + 6*s, py + 15*s, 3*s, 4*s);
-        ctx.fillStyle = "#7209b7";
-        ctx.fillRect(px + 3*s, py + 17*s, 3*s, 4*s);
-        ctx.fillStyle = "#ff5500";
-        ctx.fillRect(px + 2*s, py + 21*s, 2*s, 3*s);
-
-        ctx.fillStyle = "#ff007f";
-        ctx.fillRect(px + 20*s, py + 13*s, 3*s, 4*s);
-        ctx.fillRect(px + 23*s, py + 15*s, 3*s, 4*s);
-        ctx.fillStyle = "#7209b7";
-        ctx.fillRect(px + 26*s, py + 17*s, 3*s, 4*s);
-        ctx.fillStyle = "#ff5500";
-        ctx.fillRect(px + 28*s, py + 21*s, 2*s, 3*s);
-
-        ctx.save();
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#00f0ff";
-        ctx.fillStyle = "#00f0ff";
-        ctx.fillRect(px + 3*s, py + 14*s, 2*s, 4*s);
-        ctx.fillRect(px + 27*s, py + 14*s, 2*s, 4*s);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(px + 3*s, py + 13*s, 2*s, 1*s);
-        ctx.fillRect(px + 27*s, py + 13*s, 2*s, 1*s);
-        ctx.restore();
-
-        ctx.fillStyle = "#90e0ef";
-        ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
-        ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(px + 15*s, py + 2*s, 1*s, 1*s);
-        ctx.fillStyle = "#90e0ef";
-        ctx.fillRect(px + 14*s, py + 9*s, 1*s, 2*s);
-        ctx.fillRect(px + 17*s, py + 9*s, 1*s, 2*s);
-
-        ctx.fillStyle = "#ffaa00";
-        bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 16); });
-
-        ctx.fillStyle = "#ff3366";
-        enemyBullets.forEach(eb => {
-            ctx.fillRect(eb.x - 2, eb.y, 4, 10);
-        });
-
-        // --- VẼ QUÁI VẬT NGOÀI HÀNH TINH (ALIEN) ---
-        enemies.forEach(e => {
-            if (!e.alive) return;
-            let ex = e.x, ey = e.y + Math.sin(e.anim) * 3;
-            let es = 2.2;
-
-            ctx.fillStyle = "#ff007f";
-            ctx.fillRect(ex + es, ey + es*3, es*3, es*3);
-            ctx.fillRect(ex - es*2, ey + es, es*3, es*2);
-            ctx.fillRect(ex + es*11, ey + es*3, es*3, es*3);
-            ctx.fillRect(ex + es*13, ey + es, es*3, es*2);
-
-            ctx.fillStyle = "#7209b7";
-            ctx.fillRect(ex + es*3, ey + es*2, es*9, es*9);
-
-            ctx.fillStyle = "#f77f00";
-            ctx.fillRect(ex + es*4, ey + es, es*7, es*4);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = "#00f0ff";
-            ctx.fillRect(ex + es*6, ey + es*2, es*3, es*3);
-            ctx.shadowBlur = 0;
-        });
-    }
-
-    function endGame() {
-        isPlaying = false;
-        clearInterval(gameInterval);
-        mainMenu.querySelector("h1").textContent = "TRÒ CHƠI KẾT THÚ 💀";
-        document.getElementById("playBtn").textContent = "CHƠI LẠI 🔄";
-        mainMenu.classList.remove("hidden");
-        difficultyMenu.classList.add("hidden");
-    }
-
-    window.addEventListener("keydown", (e) => {
-        if (!isPlaying) return;
-        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
-        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
-        if (e.key === " " || e.key === "ArrowUp") {
-            bullets.push({ x: player.x + 16, y: player.y });
-            bullets.push({ x: player.x + player.width - 16, y: player.y });
-            e.preventDefault();
-        }
-    });
-
-    window.addEventListener("keyup", (e) => {
-        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
-        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
-    });
-
-    canvas.addEventListener("click", () => { canvas.focus(); });
-</script>
-
-</body>
-</html>
+        ctx.
