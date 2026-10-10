@@ -6,4 +6,364 @@
     <title>Galaxy Pixel Shooter Deluxe</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        * { box
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            background-color: #020408; color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
+        }
+        .container {
+            position: relative;
+            width: 400px; height: 520px;
+            border: 2px solid #00f0ff; border-radius: 20px;
+            background: radial-gradient(circle at center, #0a1128 0%, #020408 100%);
+            box-shadow: 0 0 35px rgba(0,240,255,0.3);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .menu-screen {
+            position: absolute; width: 100%; height: 100%;
+            background: rgba(2, 4, 8, 0.96);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; transition: opacity 0.3s ease;
+        }
+        .menu-screen.hidden { opacity: 0; pointer-events: none; }
+        h1 { color: #00f0ff; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 20px rgba(0,240,255,0.8); text-align: center; }
+        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }
+        
+        .menu-btn {
+            width: 200px; padding: 12px 0; margin: 8px 0;
+            font-size: 16px; font-weight: 800;
+            background: linear-gradient(135deg, #00f0ff, #7000ff);
+            color: #fff; border: none; border-radius: 14px;
+            cursor: pointer; box-shadow: 0 4px 20px rgba(0,240,255,0.4);
+            transition: transform 0.1s, filter 0.2s;
+        }
+        .menu-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .menu-btn:active { transform: scale(0.95); }
+
+        .hud {
+            position: absolute; top: 12px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between;
+            font-size: 15px; font-weight: bold; z-index: 5;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+        }
+        canvas { outline: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="menu-screen" id="menuScreen">
+        <h1>⚡ GALAXY PIXEL STRIKE 🚀</h1>
+        <div class="subtitle">Mũi tên/A-D di chuyển • Phím Cách bắn Laser hủy diệt</div>
+        <button class="menu-btn" onclick="startGame()">CHIẾN NGAY ▶</button>
+    </div>
+
+    <div class="hud">
+        <div>Điểm: <span id="score" style="color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.8);">0</span></div>
+        <div>Mạng: <span id="lives" style="color: #ff3366;">❤️❤️❤️</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+    const menuScreen = document.getElementById("menuScreen");
+
+    let score = 0, lives = 3, isPlaying = false, gameInterval = null;
+    let player = { x: 175, y: 410, width: 48, height: 48, speed: 6.5, dx: 0 };
+    let bullets = [], enemies = [], stars = [], particles = [], enemyDirection = 1;
+
+    for(let i=0; i<80; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 2 + 0.5,
+            alpha: Math.random() * 0.8 + 0.2
+        });
+    }
+
+    function createEnemies() {
+        enemies = [];
+        let rows = 3, cols = 5, startX = 45, startY = 60, spacingX = 64, spacingY = 52;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 40, height: 36, alive: true, anim: Math.random() * Math.PI });
+            }
+        }
+    }
+
+    function startGame() {
+        menuScreen.classList.add("hidden");
+        isPlaying = true; score = 0; lives = 3; bullets = []; particles = []; player.x = 175;
+        scoreElement.textContent = score; updateLivesDisplay(); createEnemies();
+        canvas.focus();
+        if (gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(gameLoop, 1000 / 60);
+    }
+
+    function updateLivesDisplay() {
+        let hearts = "";
+        for(let i=0; i<lives; i++) hearts += "❤️";
+        livesElement.textContent = hearts;
+    }
+
+    function addExplosion(x, y, color) {
+        for(let i=0; i<14; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let speed = Math.random() * 3.5 + 1;
+            particles.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: Math.random() * 3 + 1,
+                color: color,
+                alpha: 1,
+                decay: Math.random() * 0.03 + 0.02
+            });
+        }
+    }
+
+    function gameLoop() { update(); draw(); }
+
+    function update() {
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].y -= 14;
+            if (bullets[i].y < 0) bullets.splice(i, 1);
+        }
+
+        let hitEdge = false, aliveCount = 0;
+        enemies.forEach(e => {
+            if (!e.alive) return;
+            aliveCount++;
+            e.x += 1.1 * enemyDirection;
+            e.anim += 0.06;
+            if (e.x <= 15 || e.x + e.width >= canvas.width - 15) hitEdge = true;
+        });
+
+        if (hitEdge) {
+            enemyDirection *= -1;
+            enemies.forEach(e => {
+                e.y += 14;
+                if (e.y + e.height >= player.y) endGame();
+            });
+        }
+
+        if (aliveCount === 0) createEnemies();
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            let bulletHit = false;
+            for (let j = 0; j < enemies.length; j++) {
+                let e = enemies[j];
+                if (e.alive && bullets[i].x > e.x && bullets[i].x < e.x + e.width && bullets[i].y > e.y && bullets[i].y < e.y + e.height) {
+                    e.alive = false; bulletHit = true; score += 20; scoreElement.textContent = score;
+                    addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
+                    break;
+                }
+            }
+            if (bulletHit) bullets.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].x += particles[i].vx;
+            particles[i].y += particles[i].vy;
+            particles[i].alpha -= particles[i].decay;
+            if (particles[i].alpha <= 0) particles.splice(i, 1);
+        }
+
+        stars.forEach(star => {
+            star.y += star.speed;
+            if (star.y > canvas.height) star.y = 0;
+        });
+    }
+
+    function draw() {
+        ctx.fillStyle = "#020408";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        stars.forEach(star => {
+            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+            ctx.fillRect(star.x, star.y, star.size, star.size);
+        });
+
+        particles.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+
+        // --- TIA LASER HUỶ DIỆT ---
+        ctx.save();
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = "#ffaa00";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(player.x + player.width/2 - 4, 0, 8, player.y);
+        ctx.fillStyle = "#ffaa00";
+        ctx.fillRect(player.x + player.width/2 - 2, 0, 4, player.y);
+        ctx.restore();
+
+        // --- VẼ CHIẾN TÀU PLAYER (CÓ HIỆU ỨNG ÁNH SÁNG VÀ LỬA ĐỘNG) ---
+        let px = player.x, py = player.y;
+        let s = 1.5;
+
+        // Hiệu ứng ánh sáng động cơ rực cháy (Glowing Flame Effect)
+        ctx.save();
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "#ff5500";
+        ctx.fillStyle = "#ff5500";
+        let flameHeight = (6 + Math.random() * 8) * s;
+        ctx.fillRect(px + 12*s, py + 29*s, 2*s, flameHeight);
+        ctx.fillRect(px + 18*s, py + 29*s, 2*s, flameHeight);
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillRect(px + 13*s, py + 31*s, 1*s, flameHeight * 0.6);
+        ctx.fillRect(px + 18*s, py + 31*s, 1*s, flameHeight * 0.6);
+        ctx.restore();
+
+        // Động cơ gốc tĩnh
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(px + 12*s, py + 25*s, 2*s, 4*s);
+        ctx.fillRect(px + 18*s, py + 25*s, 2*s, 4*s);
+        ctx.fillStyle = "#ff0055";
+        ctx.fillRect(px + 11*s, py + 23*s, 3*s, 2*s);
+        ctx.fillRect(px + 18*s, py + 23*s, 3*s, 2*s);
+
+        // Thân tàu chính & Giáp đa lớp
+        ctx.fillStyle = "#00ffff";
+        ctx.fillRect(px + 15*s, py + 1*s, 2*s, 3*s);
+        ctx.fillStyle = "#00b4d8";
+        ctx.fillRect(px + 14*s, py + 4*s, 4*s, 3*s);
+        ctx.fillStyle = "#0077b6";
+        ctx.fillRect(px + 13*s, py + 7*s, 6*s, 5*s);
+        ctx.fillStyle = "#03045e";
+        ctx.fillRect(px + 12*s, py + 12*s, 8*s, 7*s);
+        ctx.fillStyle = "#00b4d8";
+        ctx.fillRect(px + 13*s, py + 13*s, 6*s, 5*s);
+
+        // Buồng lái năng lượng phát sáng mạnh
+        ctx.save();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = "#ffb703";
+        ctx.fillStyle = "#ffb703";
+        ctx.fillRect(px + 15*s, py + 6*s, 2*s, 4*s);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 15*s, py + 7*s, 1*s, 2*s);
+        ctx.restore();
+
+        // Cánh vát nhọn góc cạnh
+        ctx.fillStyle = "#ff007f";
+        ctx.fillRect(px + 9*s, py + 13*s, 3*s, 4*s);
+        ctx.fillRect(px + 6*s, py + 15*s, 3*s, 4*s);
+        ctx.fillStyle = "#7209b7";
+        ctx.fillRect(px + 3*s, py + 17*s, 3*s, 4*s);
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(px + 2*s, py + 21*s, 2*s, 3*s);
+
+        ctx.fillStyle = "#ff007f";
+        ctx.fillRect(px + 20*s, py + 13*s, 3*s, 4*s);
+        ctx.fillRect(px + 23*s, py + 15*s, 3*s, 4*s);
+        ctx.fillStyle = "#7209b7";
+        ctx.fillRect(px + 26*s, py + 17*s, 3*s, 4*s);
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(px + 28*s, py + 21*s, 2*s, 3*s);
+
+        // Đại bác plasma gắn trên cánh (Phát sáng)
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#00f0ff";
+        ctx.fillStyle = "#00f0ff";
+        ctx.fillRect(px + 3*s, py + 14*s, 2*s, 4*s);
+        ctx.fillRect(px + 27*s, py + 14*s, 2*s, 4*s);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 3*s, py + 13*s, 2*s, 1*s);
+        ctx.fillRect(px + 27*s, py + 13*s, 2*s, 1*s);
+        ctx.restore();
+
+        // Vây ổn định đuôi tàu
+        ctx.fillStyle = "#90e0ef";
+        ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
+        ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
+
+        // Điểm nhấn phát sáng (Highlights)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 15*s, py + 2*s, 1*s, 1*s);
+        ctx.fillStyle = "#90e0ef";
+        ctx.fillRect(px + 14*s, py + 9*s, 1*s, 2*s);
+        ctx.fillRect(px + 17*s, py + 9*s, 1*s, 2*s);
+
+        // Đạn laser nhỏ hai bên
+        ctx.fillStyle = "#ffaa00";
+        bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 16); });
+
+        // --- VẼ QUÁI VẬT NGOÀI HÀNH TINH (ALIEN) ---
+        enemies.forEach(e => {
+            if (!e.alive) return;
+            let ex = e.x, ey = e.y + Math.sin(e.anim) * 3;
+            let es = 2.2;
+
+            ctx.fillStyle = "#ff007f";
+            ctx.fillRect(ex + es, ey + es*3, es*3, es*3);
+            ctx.fillRect(ex - es*2, ey + es, es*3, es*2);
+            ctx.fillRect(ex + es*11, ey + es*3, es*3, es*3);
+            ctx.fillRect(ex + es*13, ey + es, es*3, es*2);
+
+            ctx.fillStyle = "#7209b7";
+            ctx.fillRect(ex + es*3, ey + es*2, es*9, es*9);
+
+            ctx.fillStyle = "#f77f00";
+            ctx.fillRect(ex + es*4, ey + es, es*7, es*4);
+
+            ctx.fillStyle = "#00f0ff";
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = "#00f0ff";
+            ctx.fillRect(ex + es*6, ey + es*2, es*3, es*3);
+            ctx.shadowBlur = 0;
+        });
+    }
+
+    function endGame() {
+        isPlaying = false;
+        clearInterval(gameInterval);
+        menuScreen.querySelector("h1").textContent = "GAME OVER 💀";
+        menuScreen.querySelector(".menu-btn").textContent = "CHƠI LẠI 🔄";
+        menuScreen.classList.remove("hidden");
+    }
+
+    window.addEventListener("keydown", (e) => {
+        if (!isPlaying) return;
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
+        if (e.key === " " || e.key === "ArrowUp") {
+            bullets.push({ x: player.x + 16, y: player.y });
+            bullets.push({ x: player.x + player.width - 16, y: player.y });
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
+        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
+    });
+
+    canvas.addEventListener("click", () => { canvas.focus(); });
+</script>
+
+</body>
+</html>
