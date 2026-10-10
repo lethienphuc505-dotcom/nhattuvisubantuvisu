@@ -2,12 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Cute 3D Whack-a-Mole",
-    page_icon="🐹",
+    page_title="Space Shooter Game",
+    page_icon="🚀",
     layout="centered"
 )
 
-game_3d_cute_mouse = """
+space_shooter_code = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -17,272 +17,267 @@ game_3d_cute_mouse = """
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
-            background-color: #1a1c29; color: #fff;
+            background-color: #0b0f19; color: #fff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh;
             overflow: hidden;
         }
-        .header { text-align: center; margin-bottom: 5px; }
-        h1 { color: #ffb703; font-size: 22px; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        h1 { color: #00fff5; font-size: 22px; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0,255,245,0.5); }
+        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 12px; }
         .info-container {
             display: flex; justify-content: space-between;
-            width: 380px; margin: 8px 0;
+            width: 400px; margin-bottom: 10px;
             font-size: 16px; font-weight: bold;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 8px 16px; border-radius: 14px;
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        #canvas-container {
-            width: 380px; height: 320px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
-            background: #212538;
-            border: 2px solid rgba(255,255,255,0.05);
+        canvas {
+            border: 2px solid #1f2937; border-radius: 14px;
+            background-color: #050811;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            outline: none;
         }
+        .hint { margin-top: 8px; color: #64748b; font-size: 12px; }
         .btn-start {
-            margin-top: 12px;
-            padding: 10px 28px;
+            margin-top: 15px;
+            padding: 10px 24px;
             font-size: 15px; font-weight: bold;
-            background: linear-gradient(135deg, #fb8500, #ffb703);
-            color: #1a1c29; border: none; border-radius: 14px;
-            cursor: pointer; box-shadow: 0 6px 20px rgba(251,133,0,0.4);
-            transition: transform 0.1s, filter 0.2s;
+            background: linear-gradient(135deg, #00fff5, #7000ff);
+            color: #fff; border: none; border-radius: 12px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.3);
         }
-        .btn-start:hover { filter: brightness(1.1); }
-        .btn-start:active { transform: scale(0.95); }
     </style>
-    <!-- Thư viện Three.js 3D -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-<div class="header">
-    <h1>🐹 Đập Chuột 3D Hoạt Hình 🌸</h1>
-</div>
+<h1>🚀 Không Chiến Không Gian 🌌</h1>
+<div class="subtitle">Dùng phím mũi tên Trái/Phải để di chuyển, phím Space để bắn!</div>
 
 <div class="info-container">
-    <div>Điểm: <span id="score" style="color: #ffb703;">0</span></div>
-    <div>Thời gian: <span id="timer" style="color: #ef476f;">30</span>s</div>
+    <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
+    <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
 </div>
 
-<div id="canvas-container"></div>
-
-<button class="btn-start" id="startBtn" onclick="startGame()">Bắt Đầu Chơi 🎮</button>
+<canvas id="gameCanvas" width="400" height="450" tabindex="1"></canvas>
+<div class="hint">Click vào khung game trước khi chơi bằng phím</div>
 
 <script>
-    let scene, camera, renderer;
-    let moleGroups = [];
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+
+    canvas.focus();
+
     let score = 0;
-    let timeLeft = 30;
-    let gameTimer = null;
-    let moleTimer = null;
-    let activeIndex = -1;
+    let lives = 3;
     let isPlaying = false;
+    let gameInterval = null;
 
-    function init3D() {
-        const container = document.getElementById('canvas-container');
-        
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x212538);
+    // Phi thuyền của người chơi
+    let player = {
+        x: 180,
+        y: 390,
+        width: 40,
+        height: 30,
+        speed: 6,
+        dx: 0
+    };
 
-        camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 7.5, 7.5);
-        camera.lookAt(0, -0.2, 0);
+    let bullets = [];
+    let enemies = [];
+    let stars = [];
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-
-        // Ánh sáng dịu nhẹ phong cách hoạt hình
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 12, 7);
-        scene.add(dirLight);
-
-        // Tạo 9 hố đất và 9 chú chuột 3D đáng yêu
-        const spacing = 1.6;
-        for (let x = -1; x <= 1; x++) {
-            for (let z = -1; z <= 1; z++) {
-                // 1. Hố đất hình trụ màu tối có viền miệng hố
-                const holeGeo = new THREE.CylinderGeometry(0.58, 0.52, 0.35, 32);
-                const holeMat = new THREE.MeshStandardMaterial({ color: 0x11131a, roughness: 0.9 });
-                const hole = new THREE.Mesh(holeGeo, holeMat);
-                hole.position.set(x * spacing, -0.05, z * spacing);
-                scene.add(hole);
-
-                // 2. Nhóm mô hình chuột hoạt hình 3D
-                const moleGroup = new THREE.Group();
-
-                // Thân chuột (Màu xám sáng mịn màng)
-                const bodyGeo = new THREE.SphereGeometry(0.35, 32, 32);
-                bodyGeo.scale(1, 1.15, 1);
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc5d3e8, roughness: 0.5 });
-                const body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.position.y = 0.05;
-                moleGroup.add(body);
-
-                // Má hồng phúng phính
-                const cheekGeo = new THREE.SphereGeometry(0.1, 16, 16);
-                const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffb5a7, roughness: 0.4 });
-                const leftCheek = new THREE.Mesh(cheekGeo, cheekMat);
-                leftCheek.position.set(-0.22, -0.02, 0.22);
-                moleGroup.add(leftCheek);
-                const rightCheek = leftCheek.clone();
-                rightCheek.position.x = 0.22;
-                moleGroup.add(rightCheek);
-
-                // Tai trái & Tai phải (Màu hồng bên trong)
-                const earGeo = new THREE.SphereGeometry(0.14, 16, 16);
-                const earMat = new THREE.MeshStandardMaterial({ color: 0x93a4b8, roughness: 0.5 });
-                const leftEar = new THREE.Mesh(earGeo, earMat);
-                leftEar.position.set(-0.28, 0.38, -0.05);
-                moleGroup.add(leftEar);
-                const rightEar = leftEar.clone();
-                rightEar.position.x = 0.28;
-                moleGroup.add(rightEar);
-
-                // Mắt chuột (Mắt bi tròn đen bóng)
-                const eyeGeo = new THREE.SphereGeometry(0.05, 16, 16);
-                const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2b2d42, roughness: 0.1 });
-                const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-                leftEye.position.set(-0.13, 0.12, 0.28);
-                moleGroup.add(leftEye);
-                const rightEye = leftEye.clone();
-                rightEye.position.x = 0.13;
-                moleGroup.add(rightEye);
-
-                // Mũi chuột hồng xinh
-                const noseGeo = new THREE.SphereGeometry(0.06, 16, 16);
-                const noseMat = new THREE.MeshStandardMaterial({ color: 0xff5964, roughness: 0.3 });
-                const nose = new THREE.Mesh(noseGeo, noseMat);
-                nose.position.set(0, 0.04, 0.33);
-                moleGroup.add(nose);
-
-                // Vị trí ẩn bên dưới hố
-                moleGroup.position.set(x * spacing, -0.9, z * spacing);
-                scene.add(moleGroup);
-                moleGroups.push(moleGroup);
-            }
-        }
-
-        // Bắt sự kiện click chuột
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        renderer.domElement.addEventListener('click', (event) => {
-            if (!isPlaying) return;
-            const rect = renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            
-            if (intersects.length > 0) {
-                for (let i = 0; i < moleGroups.length; i++) {
-                    if (isDescendant(intersects[0].object, moleGroups[i])) {
-                        if (i === activeIndex) {
-                            score += 10;
-                            document.getElementById('score').textContent = score;
-                            
-                            // Hiệu ứng thụt xuống nhanh khi bị đập trúng
-                            hideMole(activeIndex);
-                            activeIndex = -1;
-                        }
-                        break;
-                    }
-                }
-            }
+    // Tạo hiệu ứng sao nền không gian
+    for(let i=0; i<50; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            speed: Math.random() * 1.5 + 0.5
         });
-
-        animate();
-    }
-
-    function isDescendant(child, parent) {
-        let node = child.parent;
-        while (node != null) {
-            if (node == parent) return true;
-            node = node.parent;
-        }
-        return false;
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
     }
 
     function startGame() {
         if (isPlaying) return;
         isPlaying = true;
         score = 0;
-        timeLeft = 30;
-        document.getElementById('score').textContent = score;
-        document.getElementById('timer').textContent = timeLeft;
-        document.getElementById('startBtn').style.display = 'none';
-
-        gameTimer = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer').textContent = timeLeft;
-            if (timeLeft <= 0) {
-                endGame();
-            }
-        }, 1000);
-
-        showRandomMole();
+        lives = 3;
+        bullets = [];
+        enemies = [];
+        scoreElement.textContent = score;
+        updateLivesDisplay();
+        
+        if (gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(gameLoop, 1000 / 60); // 60 FPS
     }
 
-    function showRandomMole() {
-        if (!isPlaying) return;
+    function updateLivesDisplay() {
+        let hearts = "";
+        for(let i=0; i<lives; i++) hearts += "❤️";
+        livesElement.textContent = hearts;
+    }
 
-        if (activeIndex !== -1) {
-            hideMole(activeIndex);
+    function gameLoop() {
+        update();
+        draw();
+    }
+
+    function update() {
+        // Di chuyển phi thuyền
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        // Cập nhật đạn
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].y -= 8;
+            if (bullets[i].y < 0) {
+                bullets.splice(i, 1);
+            }
         }
 
-        activeIndex = Math.floor(Math.random() * moleGroups.length);
-        
-        // Hiệu ứng chuột trồi lên mượt mà
-        let currentY = -0.9;
-        const targetY = -0.15;
-        const riseInterval = setInterval(() => {
-            currentY += 0.12;
-            if (currentY >= targetY) {
-                currentY = targetY;
-                clearInterval(riseInterval);
-            }
-            moleGroups[activeIndex].position.y = currentY;
-        }, 15);
+        // Tạo kẻ địch ngẫu nhiên
+        if (Math.random() < 0.03) {
+            enemies.push({
+                x: Math.random() * (canvas.width - 35),
+                y: -40,
+                width: 35,
+                height: 35,
+                speed: 2 + Math.random() * 2
+            });
+        }
 
-        let speed = Math.max(450, 1100 - (score * 25));
-        moleTimer = setTimeout(showRandomMole, speed);
+        // Cập nhật kẻ địch
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            enemies[i].y += enemies[i].speed;
+
+            // Kiểm tra va chạm với phi thuyền
+            if (
+                player.x < enemies[i].x + enemies[i].width &&
+                player.x + player.width > enemies[i].x &&
+                player.y < enemies[i].y + enemies[i].height &&
+                player.y + player.height > enemies[i].y
+            ) {
+                enemies.splice(i, 1);
+                lives--;
+                updateLivesDisplay();
+                if (lives <= 0) {
+                    endGame();
+                }
+                continue;
+            }
+
+            // Kẻ địch qua màn hình (mất máu)
+            if (enemies[i].y > canvas.height) {
+                enemies.splice(i, 1);
+            }
+        }
+
+        // Kiểm tra đạn trúng kẻ địch
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                if (
+                    bullets[i].x > enemies[j].x &&
+                    bullets[i].x < enemies[j].x + enemies[j].width &&
+                    bullets[i].y > enemies[j].y &&
+                    bullets[i].y < enemies[j].y + enemies[j].height
+                ) {
+                    bullets.splice(i, 1);
+                    enemies.splice(j, 1);
+                    score += 10;
+                    scoreElement.textContent = score;
+                    break;
+                }
+            }
+        }
+
+        // Cập nhật sao nền
+        stars.forEach(star => {
+            star.y += star.speed;
+            if (star.y > canvas.height) star.y = 0;
+        });
     }
 
-    function hideMole(index) {
-        if (index === -1) return;
-        moleGroups[index].position.y = -0.9;
+    function draw() {
+        ctx.fillStyle = "#050811";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Vẽ sao
+        ctx.fillStyle = "#ffffff";
+        stars.forEach(star => {
+            ctx.fillRect(star.x, star.y, star.size, star.size);
+        });
+
+        // Vẽ phi thuyền người chơi (Hình tam giác khoa học viễn tưởng)
+        ctx.fillStyle = "#00fff5";
+        ctx.beginPath();
+        ctx.moveTo(player.x + player.width / 2, player.y);
+        ctx.lineTo(player.x, player.y + player.height);
+        ctx.lineTo(player.x + player.width, player.y + player.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Vẽ đạn
+        ctx.fillStyle = "#ffb703";
+        bullets.forEach(b => {
+            ctx.fillRect(b.x - 2, b.y, 4, 10);
+        });
+
+        // Vẽ kẻ địch (Tiểu hành tinh / Tàu địch hình vuông đỏ)
+        ctx.fillStyle = "#ff4b4b";
+        enemies.forEach(e => {
+            ctx.fillRect(e.x, e.y, e.width, e.height);
+            // Trang trí thêm chi tiết tàu địch
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(e.x + 10, e.y + 10, 15, 5);
+            ctx.fillStyle = "#ff4b4b";
+        });
     }
 
     function endGame() {
         isPlaying = false;
-        clearInterval(gameTimer);
-        clearTimeout(moleTimer);
-        if (activeIndex !== -1) {
-            hideMole(activeIndex);
-            activeIndex = -1;
-        }
-        document.getElementById('startBtn').style.display = 'block';
-        document.getElementById('startBtn').textContent = 'Chơi Lại 🎮';
-        alert(`Hết giờ rồi! Tổng số điểm của bạn là: ${score}`);
+        clearInterval(gameInterval);
+        
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#ff4b4b";
+        ctx.font = "bold 26px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "16px sans-serif";
+        ctx.fillText(`Tổng điểm: ${score}`, canvas.width / 2, canvas.height / 2 + 15);
+        ctx.fillText("Nhấn nút Bắt Đầu để chơi lại", canvas.width / 2, canvas.height / 2 + 50);
+        ctx.textAlign = "start";
     }
 
-    window.onload = init3D;
+    // Điều khiển bàn phím
+    window.addEventListener("keydown", (e) => {
+        if (!isPlaying) return;
+        if (e.key === "ArrowLeft" || e.key === "a") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d") player.dx = player.speed;
+        if (e.key === " " || e.key === "ArrowUp") {
+            bullets.push({ x: player.x + player.width / 2, y: player.y });
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if ((e.key === "ArrowLeft" || e.key === "a") && player.dx < 0) player.dx = 0;
+        if ((e.key === "ArrowRight" || e.key === "d") && player.dx > 0) player.dx = 0;
+    });
+
+    // Vẽ màn hình chờ ban đầu
+    draw();
 </script>
 
 </body>
 </html>
 """
 
-components.html(game_3d_cute_mouse, height=520)
+components.html(space_shooter_code, height=550)
