@@ -54,7 +54,7 @@ space_shooter_code = """
 </head>
 <body>
 
-<h1>🚀 Không Chiến Không Gian 🌌</h1>
+<h1>🚀 Không Chiến Không Gian (Dễ Chơi) 🌌</h1>
 <div class="subtitle">Dùng phím mũi tên Trái/Phải để di chuyển, Phím Cách (Space) để bắn!</div>
 
 <div class="info-container">
@@ -82,7 +82,7 @@ space_shooter_code = """
         y: 360,
         width: 40,
         height: 35,
-        speed: 7,
+        speed: 4.5, // Giảm tốc độ di chuyển của tàu để dễ kiểm soát hơn
         dx: 0
     };
 
@@ -90,13 +90,12 @@ space_shooter_code = """
     let enemies = [];
     let stars = [];
 
-    // Tạo các vì sao nền
     for(let i=0; i<40; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             size: Math.random() * 2 + 1,
-            speed: Math.random() * 1.5 + 0.5
+            speed: Math.random() * 1 + 0.3
         });
     }
 
@@ -111,7 +110,7 @@ space_shooter_code = """
         updateLivesDisplay();
         document.getElementById("startBtn").style.display = "none";
         
-        canvas.focus(); // Đảm bảo nhận phím ngay lập tức
+        canvas.focus();
 
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(gameLoop, 1000 / 60);
@@ -129,33 +128,30 @@ space_shooter_code = """
     }
 
     function update() {
-        // Di chuyển phi thuyền người chơi
         player.x += player.dx;
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-        // Cập nhật đạn
+        // Tăng tốc độ đạn bay để bắn trúng mượt hơn
         for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].y -= 9;
+            bullets[i].y -= 10;
             if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // Tạo kẻ địch
-        if (Math.random() < 0.03) {
+        // Giảm tần suất xuất hiện kẻ địch (cho thưa ra để dễ thở)
+        if (Math.random() < 0.018) {
             enemies.push({
                 x: Math.random() * (canvas.width - 40),
                 y: -40,
                 width: 36,
                 height: 32,
-                speed: 2.2 + Math.random() * 2
+                speed: 1.2 + Math.random() * 1.0 // Giảm tốc độ rơi của địch xuống chậm hơn hẳn
             });
         }
 
-        // Cập nhật kẻ địch
         for (let i = enemies.length - 1; i >= 0; i--) {
             enemies[i].y += enemies[i].speed;
 
-            // Va chạm với người chơi
             if (
                 player.x < enemies[i].x + enemies[i].width &&
                 player.x + player.width > enemies[i].x &&
@@ -169,13 +165,11 @@ space_shooter_code = """
                 continue;
             }
 
-            // Kẻ địch qua màn hình
             if (enemies[i].y > canvas.height) {
                 enemies.splice(i, 1);
             }
         }
 
-        // Đạn bắn trúng kẻ địch
         for (let i = bullets.length - 1; i >= 0; i--) {
             for (let j = enemies.length - 1; j >= 0; j--) {
                 if (
@@ -193,7 +187,6 @@ space_shooter_code = """
             }
         }
 
-        // Di chuyển sao nền
         stars.forEach(star => {
             star.y += star.speed;
             if (star.y > canvas.height) star.y = 0;
@@ -201,21 +194,18 @@ space_shooter_code = """
     }
 
     function draw() {
-        // Xóa màn hình
         ctx.fillStyle = "#050811";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Vẽ sao
         ctx.fillStyle = "#ffffff";
         stars.forEach(star => {
             ctx.fillRect(star.x, star.y, star.size, star.size);
         });
 
-        // --- VẼ TÀU NGƯỜI CHƠI (Chi tiết sinh động) ---
+        // Tàu người chơi
         let px = player.x;
         let py = player.y;
         
-        // Thân tàu chính
         ctx.fillStyle = "#00fff5";
         ctx.beginPath();
         ctx.moveTo(px + 20, py);
@@ -224,34 +214,30 @@ space_shooter_code = """
         ctx.closePath();
         ctx.fill();
 
-        // Cánh tàu
         ctx.fillStyle = "#7000ff";
         ctx.fillRect(px, py + 18, 8, 12);
         ctx.fillRect(px + 32, py + 18, 8, 12);
 
-        // Buồng lái sáng
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
         ctx.arc(px + 20, py + 12, 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Đuôi lửa phản lực
         ctx.fillStyle = "#ffb703";
-        ctx.fillRect(px + 14, py + 25, 4, 8 + Math.random() * 5);
-        ctx.fillRect(px + 22, py + 25, 4, 8 + Math.random() * 5);
+        ctx.fillRect(px + 14, py + 25, 4, 6 + Math.random() * 4);
+        ctx.fillRect(px + 22, py + 25, 4, 6 + Math.random() * 4);
 
-        // --- VẼ ĐẠN ---
+        // Đạn
         ctx.fillStyle = "#ffb703";
         bullets.forEach(b => {
             ctx.fillRect(b.x - 2, b.y, 4, 12);
         });
 
-        // --- VẼ TÀU ĐỊCH (Hình thù chiến hạm đỏ góc cạnh) ---
+        // Tàu địch
         enemies.forEach(e => {
             let ex = e.x;
             let ey = e.y;
 
-            // Thân tàu địch
             ctx.fillStyle = "#ff4b4b";
             ctx.beginPath();
             ctx.moveTo(ex + 18, ey + 32);
@@ -260,11 +246,9 @@ space_shooter_code = """
             ctx.closePath();
             ctx.fill();
 
-            // Cánh tàu địch
             ctx.fillStyle = "#b7094c";
             ctx.fillRect(ex + 4, ey + 10, 28, 6);
 
-            // Đèn năng lượng địch
             ctx.fillStyle = "#00fff5";
             ctx.beginPath();
             ctx.arc(ex + 18, ey + 18, 4, 0, Math.PI * 2);
@@ -293,7 +277,6 @@ space_shooter_code = """
         ctx.textAlign = "start";
     }
 
-    // Lắng nghe sự kiện bàn phím
     window.addEventListener("keydown", (e) => {
         if (!isPlaying) return;
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
@@ -309,12 +292,10 @@ space_shooter_code = """
         if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
     });
 
-    // Cho phép click vào canvas để lấy focus bàn phím
     canvas.addEventListener("click", () => {
         canvas.focus();
     });
 
-    // Vẽ khung hình tĩnh ban đầu
     draw();
 </script>
 
