@@ -90,19 +90,23 @@
                 x: 150, y: 50, width: 100, height: 70,
                 hp: 45, maxHp: 45, dx: 1.8, anim: 0
             };
+            // Tạo sẵn vài con nhỏ mở màn Boss stage
+            for (let i = 0; i < 2; i++) {
+                enemies.push(createFreeAlien());
+            }
         }
     }
 
     function createFreeAlien() {
+        let speedMultiplier = (difficulty === 'easy') ? 0.6 : (difficulty === 'normal' ? 1.0 : 1.6);
         return {
             x: Math.random() * (canvas.width - 60) + 30,
             y: Math.random() * 100 + 40,
-            vx: (Math.random() - 0.5) * 2.2,
-            vy: (Math.random() - 0.2) * 1.2 + 0.4,
+            vx: (Math.random() - 0.5) * 2.0 * speedMultiplier,
+            vy: ((Math.random() - 0.2) * 1.0 + 0.3) * speedMultiplier,
             width: 42, height: 38,
             alive: true,
-            anim: Math.random() * Math.PI * 2,
-            speedOffset: 0.7 + Math.random() * 0.5
+            anim: Math.random() * Math.PI * 2
         };
     }
 
@@ -164,6 +168,12 @@
     }, 1000 / 60);
 
     function update() {
+        // Cập nhật hiệu ứng chuyển động sao nền ngay cả khi ở Menu
+        stars.forEach(star => {
+            star.y += star.speed;
+            if (star.y > canvas.height) star.y = 0;
+        });
+
         if (gameState !== 'playing') return;
 
         if (shootCooldown > 0) shootCooldown--;
@@ -209,13 +219,15 @@
             }
         }
 
-        // Tốc độ bắn laser của địch
-        let alienShootChance = currentStage === 1 ? 0.005 : 0.01;
+        // Tần suất bắn đạn của alien phụ thuộc vào độ khó
+        let shootMultiplier = (difficulty === 'easy') ? 0.4 : (difficulty === 'normal' ? 1.0 : 1.8);
+        let alienShootChance = 0.008 * shootMultiplier;
         if (Math.random() < alienShootChance) {
             let activeEnemies = enemies.filter(e => e.alive);
             if (activeEnemies.length > 0) {
                 let shooter = activeEnemies[Math.floor(Math.random() * activeEnemies.length)];
-                enemyBullets.push({ x: shooter.x + shooter.width/2, y: shooter.y + shooter.height, speed: 3.2 });
+                let bulletSpeed = (difficulty === 'easy') ? 2.5 : (difficulty === 'normal' ? 3.5 : 5.0);
+                enemyBullets.push({ x: shooter.x + shooter.width/2, y: shooter.y + shooter.height, speed: bulletSpeed });
             }
         }
 
@@ -235,15 +247,6 @@
 
         // Xử lý Giai đoạn 1 & 2
         if (currentStage === 1 || currentStage === 2) {
-            // Cứ mỗi 5 giây (300 frames) tạo thêm 3 tàu alien nhỏ tiếp viện
-            spawnTimer++;
-            if (spawnTimer >= 300) {
-                spawnTimer = 0;
-                for (let k = 0; k < 3; k++) {
-                    enemies.push(createFreeAlien());
-                }
-            }
-
             let aliveCount = 0;
             enemies.forEach(e => {
                 if (!e.alive) return;
@@ -265,7 +268,6 @@
                 }
             });
 
-            // Tiến tới giai đoạn tiếp theo nếu tiêu diệt sạch hoặc đạt mốc điểm chiến dịch
             if (score >= 200 && currentStage === 1) {
                 currentStage = 2;
                 initStage();
@@ -274,16 +276,42 @@
                 initStage();
             }
         } 
-        // Xử lý Boss Stage
+        // Xử lý Boss Stage (Cứ mỗi 5 giây sinh ra 3 tàu alien nhỏ tiếp viện)
         else if (currentStage === 3 && boss) {
-            boss.x += boss.dx;
+            spawnTimer++;
+            if (spawnTimer >= 300) { // 300 frames = 5 giây
+                spawnTimer = 0;
+                for (let k = 0; k < 3; k++) {
+                    enemies.push(createFreeAlien());
+                }
+            }
+
+            // Cập nhật quái nhỏ phụ trong màn Boss
+            enemies.forEach(e => {
+                if (!e.alive) return;
+                e.x += e.vx;
+                e.y += e.vy;
+                if (e.x <= 10 || e.x + e.width >= canvas.width - 10) e.vx *= -1;
+                if (e.y <= 30 || e.y >= 250) e.vy *= -1;
+                if (e.y > player.y) {
+                    e.alive = false;
+                    lives--;
+                    updateLivesDisplay();
+                    addExplosion(e.x + e.width/2, e.y, "#ff3366");
+                    if (lives <= 0) endGame();
+                }
+            });
+
+            let bossSpeedMult = (difficulty === 'easy') ? 0.7 : (difficulty === 'normal' ? 1.0 : 1.5);
+            boss.x += boss.dx * bossSpeedMult;
             boss.anim += 0.06;
             if (boss.x <= 15 || boss.x + boss.width >= canvas.width - 15) boss.dx *= -1;
 
-            if (Math.random() < 0.03) {
-                enemyBullets.push({ x: boss.x + 25, y: boss.y + boss.height, speed: 4.5 });
-                enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, speed: 5 });
-                enemyBullets.push({ x: boss.x + boss.width - 25, y: boss.y + boss.height, speed: 4.5 });
+            if (Math.random() < (0.02 * bossSpeedMult)) {
+                let bSpeed = (difficulty === 'easy') ? 3.0 : (difficulty === 'normal' ? 4.2 : 5.5);
+                enemyBullets.push({ x: boss.x + 25, y: boss.y + boss.height, speed: bSpeed });
+                enemyBullets.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, speed: bSpeed });
+                enemyBullets.push({ x: boss.x + boss.width - 25, y: boss.y + boss.height, speed: bSpeed });
             }
         }
 
@@ -300,7 +328,6 @@
                     scoreElement.textContent = score;
                     addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
 
-                    // Tỷ lệ rơi vật phẩm (khoảng 35%)
                     if (Math.random() < 0.35) {
                         let rand = Math.random();
                         let pType = rand < 0.33 ? 'hp' : (rand < 0.66 ? 'double' : 'fast');
@@ -331,17 +358,13 @@
             particles[i].alpha -= particles[i].decay;
             if (particles[i].alpha <= 0) particles.splice(i, 1);
         }
-
-        stars.forEach(star => {
-            star.y += star.speed;
-            if (star.y > canvas.height) star.y = 0;
-        });
     }
 
     function draw() {
         ctx.fillStyle = "#020408";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Hiệu ứng sao bay nền động mượt mà
         stars.forEach(star => {
             ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
             ctx.fillRect(star.x, star.y, star.size, star.size);
@@ -368,12 +391,11 @@
             bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 12); });
             ctx.restore();
 
-            // Vẽ vật phẩm đúng chuẩn hình ảnh trực quan theo tên gọi
+            // Vẽ vật phẩm đúng chuẩn tên gọi
             powerUps.forEach(p => {
                 ctx.save();
                 let px = p.x, py = p.y;
                 if (p.type === 'hp') {
-                    // Hình trái tim đỏ +HP
                     ctx.shadowBlur = 12;
                     ctx.shadowColor = "#ff3366";
                     ctx.fillStyle = "#ff3366";
@@ -383,7 +405,6 @@
                     ctx.lineTo(px, py + 8);
                     ctx.fill();
                 } else if (p.type === 'double') {
-                    // Hình 2 nòng súng song song (2X)
                     ctx.shadowBlur = 12;
                     ctx.shadowColor = "#ffb703";
                     ctx.fillStyle = "#ffb703";
@@ -393,7 +414,6 @@
                     ctx.fillRect(px - 7, py - 2, 4, 4);
                     ctx.fillRect(px + 5, py - 2, 4, 4);
                 } else if (p.type === 'fast') {
-                    // Hình tia chớp năng lượng xanh lá (FAST)
                     ctx.shadowBlur = 12;
                     ctx.shadowColor = "#06d6a0";
                     ctx.fillStyle = "#06d6a0";
@@ -487,186 +507,10 @@
             ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
             ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
 
-            // Vẽ quái thường
-            if (currentStage === 1 || currentStage === 2) {
-                enemies.forEach(e => {
-                    if (!e.alive) return;
-                    let ex = e.x, ey = e.y, es = 1.6;
+            // Vẽ quái nhỏ (bao gồm cả quái tiếp viện trong màn Boss)
+            enemies.forEach(e => {
+                if (!e.alive) return;
+                let ex = e.x, ey = e.y, es = 1.6;
 
-                    ctx.fillStyle = "#ff007f";
-                    ctx.fillRect(ex + 2*es, ey + 6*es, 4*es, 4*es);
-                    ctx.fillRect(ex - 2*es, ey + 4*es, 4*es, 3*es);
-                    ctx.fillRect(ex + 15*es, ey + 6*es, 4*es, 4*es);
-                    ctx.fillRect(ex + 19*es, ey + 4*es, 4*es, 3*es);
-
-                    ctx.fillStyle = "#560bad";
-                    ctx.fillRect(ex + 5*es, ey + 4*es, 11*es, 11*es);
-                    ctx.fillStyle = "#7209b7";
-                    ctx.fillRect(ex + 6*es, ey + 5*es, 9*es, 9*es);
-
-                    ctx.fillStyle = "#f77f00";
-                    ctx.fillRect(ex + 7*es, ey + 2*es, 7*es, 4*es);
-                    ctx.fillStyle = "#fcbf49";
-                    ctx.fillRect(ex + 9*es, ey + 1*es, 3*es, 2*es);
-
-                    ctx.save();
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = "#ff0055";
-                    ctx.fillStyle = "#ff0055";
-                    ctx.fillRect(ex + 7*es, ey + 6*es, 2*es, 3*es);
-                    ctx.fillRect(ex + 12*es, ey + 6*es, 2*es, 3*es);
-                    ctx.restore();
-
-                    ctx.fillStyle = "#4cc9f0";
-                    ctx.fillRect(ex + 1*es, ey + 9*es, 3*es, 2*es);
-                    ctx.fillRect(ex + 17*es, ey + 9*es, 3*es, 2*es);
-                });
-            } 
-            // Thiết kế Boss cực ngầu, đẹp mắt với giáp cyber và lõi phản ứng năng lượng chớp nháy
-            else if (currentStage === 3 && boss) {
-                let bx = boss.x, by = boss.y;
-                ctx.save();
-                ctx.shadowBlur = 25;
-                ctx.shadowColor = "#00f0ff";
-
-                // Cánh giáp phụ ngoài cùng
-                ctx.fillStyle = "#3a0ca3";
-                ctx.fillRect(bx - 12, by + 18, 16, 25);
-                ctx.fillRect(bx + boss.width - 4, by + 18, 16, 25);
-
-                // Giáp thân chính hầm hố
-                ctx.fillStyle = "#4361ee";
-                ctx.fillRect(bx + 10, by + 8, boss.width - 20, 36);
-                ctx.fillStyle = "#7209b7";
-                ctx.fillRect(bx + 18, by + 12, boss.width - 36, 28);
-
-                // Buồng lái / Lõi lò phản ứng trung tâm chớp nháy năng lượng
-                let coreColor = Math.floor(boss.anim * 10) % 2 === 0 ? "#ff007f" : "#4cc9f0";
-                ctx.fillStyle = coreColor;
-                ctx.shadowColor = coreColor;
-                ctx.fillRect(bx + boss.width/2 - 12, by + 18, 24, 16);
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(bx + boss.width/2 - 4, by + 22, 8, 8);
-
-                // Pháo plasma đôi gắn hai bên
-                ctx.fillStyle = "#f77f00";
-                ctx.fillRect(bx + 6, by + 35, 8, 18);
-                ctx.fillRect(bx + boss.width - 14, by + 35, 8, 18);
-
-                ctx.restore();
-
-                // Thanh máu Boss
-                ctx.fillStyle = "#222";
-                ctx.fillRect(bx, by - 14, boss.width, 6);
-                ctx.fillStyle = "#ff3366";
-                ctx.fillRect(bx, by - 14, boss.width * (boss.hp / boss.maxHp), 6);
-            }
-        } 
-        else if (gameState === 'menu') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.95)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.font = "bold 22px 'Plus Jakarta Sans'";
-            ctx.textAlign = "center";
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "#00f0ff";
-            ctx.fillText("GALAXY PIXEL STRIKE", canvas.width / 2, 180);
-            ctx.shadowBlur = 0;
-
-            ctx.fillStyle = "#8892b0";
-            ctx.font = "12px 'Plus Jakarta Sans'";
-            ctx.fillText("Dùng A-D hoặc Mũi tên để di chuyển • Phím Cách bắn đạn", canvas.width / 2, 220);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.fillRect(100, 280, 200, 50);
-            ctx.fillStyle = "#020408";
-            ctx.font = "bold 18px 'Plus Jakarta Sans'";
-            ctx.fillText("CHƠI NGAY", canvas.width / 2, 312);
-        }
-        else if (gameState === 'difficulty') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.96)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.font = "bold 22px 'Plus Jakarta Sans'";
-            ctx.textAlign = "center";
-            ctx.fillText("CHỌN ĐỘ KHÓ", canvas.width / 2, 140);
-            
-            ctx.fillStyle = "#8892b0";
-            ctx.font = "13px 'Plus Jakarta Sans'";
-            ctx.fillText("SELECT DIFFICULTY", canvas.width / 2, 168);
-
-            ctx.fillStyle = "#06d6a0";
-            ctx.fillRect(100, 220, 200, 45);
-            ctx.fillStyle = "#020408";
-            ctx.font = "bold 16px 'Plus Jakarta Sans'";
-            ctx.fillText("DỄ", canvas.width / 2, 248);
-
-            ctx.fillStyle = "#ffb703";
-            ctx.fillRect(100, 285, 200, 45);
-            ctx.fillStyle = "#020408";
-            ctx.fillText("BÌNH THƯỜNG", canvas.width / 2, 313);
-
-            ctx.fillStyle = "#ff3366";
-            ctx.fillRect(100, 350, 200, 45);
-            ctx.fillStyle = "#fff";
-            ctx.fillText("KHÓ", canvas.width / 2, 378);
-        }
-        else if (gameState === 'gameover' || gameState === 'victory') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.96)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = gameState === 'victory' ? "#06d6a0" : "#ff3366";
-            ctx.font = "bold 24px 'Plus Jakarta Sans'";
-            ctx.textAlign = "center";
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = ctx.fillStyle;
-            ctx.fillText(gameState === 'victory' ? "CHIẾN THẮNG" : "TRÒ CHƠI KẾT THÚ", canvas.width / 2, 180);
-            ctx.shadowBlur = 0;
-
-            ctx.fillStyle = "#fff";
-            ctx.font = "16px 'Plus Jakarta Sans'";
-            ctx.fillText("Tổng điểm: " + score, canvas.width / 2, 230);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.fillRect(100, 310, 200, 50);
-            ctx.fillStyle = "#020408";
-            ctx.font = "bold 16px 'Plus Jakarta Sans'";
-            ctx.fillText("CHƠI LẠI", canvas.width / 2, 342);
-        }
-    }
-
-    function endGame() {
-        gameState = 'gameover';
-    }
-
-    window.addEventListener("keydown", (e) => {
-        if (gameState !== 'playing') return;
-        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
-        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
-        if (e.key === " " || e.key === "ArrowUp") {
-            let limitCooldown = player.powerFast ? 8 : 15;
-            if (shootCooldown <= 0) {
-                if (player.powerDouble) {
-                    bullets.push({ x: player.x + 12, y: player.y });
-                    bullets.push({ x: player.x + player.width - 12, y: player.y });
-                } else {
-                    bullets.push({ x: player.x + player.width / 2, y: player.y });
-                }
-                shootCooldown = limitCooldown;
-            }
-            e.preventDefault();
-        }
-    });
-
-    window.addEventListener("keyup", (e) => {
-        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
-        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
-    });
-
-    canvas.addEventListener("click", () => { canvas.focus(); });
-</script>
-
-</body>
-</html>
+                ctx.fillStyle = "#ff007f";
+                ctx.fillRect(ex + 2*es, ey + 6*es, 4*es, 4*
