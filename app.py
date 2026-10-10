@@ -7,7 +7,7 @@ st.set_page_config(
     layout="centered"
 )
 
-space_menu_code = """
+space_menu_code = r"""
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -72,7 +72,6 @@ space_menu_code = """
 <body>
 
 <div class="container" id="gameContainer">
-    <!-- MÀN HÌNH MENU -->
     <div class="menu-screen" id="menuScreen">
         <h1>🚀 KHÔNG CHIẾN 🌌</h1>
         <div class="subtitle" id="modeText">Chế độ hiện tại: DỄ (Chill)</div>
@@ -81,7 +80,6 @@ space_menu_code = """
         <button class="menu-btn mode-btn" onclick="toggleMode()">ĐỔI CHẾ ĐỘ ⚙️</button>
     </div>
 
-    <!-- HUD TRONG GAME -->
     <div class="hud">
         <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
         <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
@@ -102,7 +100,7 @@ space_menu_code = """
     let lives = 3;
     let isPlaying = false;
     let gameInterval = null;
-    let currentMode = 'easy'; // 'easy' hoặc 'hard'
+    let currentMode = 'easy';
 
     let player = {
         x: 180,
@@ -176,7 +174,6 @@ space_menu_code = """
             if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // Tần suất và tốc độ kẻ địch thay đổi theo chế độ chọn
         let spawnRate = currentMode === 'easy' ? 0.018 : 0.035;
         let enemySpeedMin = currentMode === 'easy' ? 1.2 : 2.2;
         let enemySpeedMax = currentMode === 'easy' ? 2.2 : 3.8;
@@ -244,7 +241,6 @@ space_menu_code = """
             ctx.fillRect(star.x, star.y, star.size, star.size);
         });
 
-        // Tàu người chơi
         let px = player.x;
         let py = player.y;
         
@@ -257,4 +253,76 @@ space_menu_code = """
         ctx.fill();
 
         ctx.fillStyle = "#7000ff";
-        ctx.fillRect(px, py + 18, 8, 12)
+        ctx.fillRect(px, py + 18, 8, 12);
+        ctx.fillRect(px + 32, py + 18, 8, 12);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(px + 20, py + 12, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffb703";
+        ctx.fillRect(px + 14, py + 25, 4, 6 + Math.random() * 4);
+        ctx.fillRect(px + 22, py + 25, 4, 6 + Math.random() * 4);
+
+        ctx.fillStyle = "#ffb703";
+        bullets.forEach(b => {
+            ctx.fillRect(b.x - 2, b.y, 4, 12);
+        });
+
+        enemies.forEach(e => {
+            let ex = e.x;
+            let ey = e.y;
+
+            ctx.fillStyle = "#ff4b4b";
+            ctx.beginPath();
+            ctx.moveTo(ex + 18, ey + 32);
+            ctx.lineTo(ex, ey + 5);
+            ctx.lineTo(ex + 36, ey + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#b7094c";
+            ctx.fillRect(ex + 4, ey + 10, 28, 6);
+
+            ctx.fillStyle = "#00fff5";
+            ctx.beginPath();
+            ctx.arc(ex + 18, ey + 18, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function endGame() {
+        isPlaying = false;
+        clearInterval(gameInterval);
+        
+        menuScreen.querySelector("h1").textContent = "GAME OVER 💀";
+        menuScreen.querySelector(".menu-btn").textContent = "CHƠI LẠI 🔄";
+        menuScreen.classList.remove("hidden");
+    }
+
+    window.addEventListener("keydown", (e) => {
+        if (!isPlaying) return;
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
+        if (e.key === " " || e.key === "ArrowUp") {
+            bullets.push({ x: player.x + player.width / 2, y: player.y });
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
+        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
+    });
+
+    canvas.addEventListener("click", () => {
+        canvas.focus();
+    });
+</script>
+
+</body>
+</html>
+"""
+
+components.html(space_menu_code, height=540)
