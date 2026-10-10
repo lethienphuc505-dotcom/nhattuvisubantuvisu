@@ -2,77 +2,107 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Streamlit Whack-a-Mole",
+    page_title="Cute Whack-a-Mole",
     page_icon="🐹",
     layout="centered"
 )
 
-st.write("Nhấn vào các ô có chú chuột xuất hiện để ghi điểm trước khi hết giờ!")
-
-whack_game_code = """
+cute_game_code = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
-            background-color: #0e1117; color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fcf6f5; color: #3d3a39;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            color: #d87c69;
+            margin-bottom: 5px;
+            font-size: 26px;
+        }
+        .subtitle {
+            color: #8c7b78;
+            font-size: 14px;
+            margin-bottom: 15px;
         }
         .info-container {
             display: flex; justify-content: space-between;
-            width: 340px; margin-bottom: 15px;
-            font-size: 18px; font-weight: 600;
+            width: 360px; margin-bottom: 15px;
+            font-size: 18px; font-weight: 700;
+            background: #ffffff;
+            padding: 12px 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(233, 180, 169, 0.2);
         }
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 340px;
-            height: 340px;
-            background-color: #16213e;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+            gap: 14px;
+            width: 360px;
+            height: 360px;
+            background-color: #faedcd;
+            padding: 16px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(212, 163, 89, 0.2);
         }
         .hole {
-            background-color: #0f3460;
+            background-color: #fefae0;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
+            font-size: 44px;
             cursor: pointer;
             user-select: none;
-            transition: background-color 0.1s;
+            box-shadow: inset 0 6px 12px rgba(0,0,0,0.06);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .hole:active {
+            transform: scale(0.92);
         }
         .hole.mole {
-            background-color: #e94560;
+            background-color: #ffb4a9;
+            transform: scale(1.05);
+            animation: pop 0.15s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.8); }
+            100% { transform: scale(1.05); }
         }
         .btn-start {
             margin-top: 20px;
-            padding: 10px 20px;
+            padding: 12px 28px;
             font-size: 16px;
-            font-weight: bold;
-            background-color: #00fff5;
-            color: #0e1117;
+            font-weight: 800;
+            background-color: #e07a5f;
+            color: #ffffff;
             border: none;
-            border-radius: 8px;
+            border-radius: 16px;
             cursor: pointer;
+            box-shadow: 0 6px 15px rgba(224, 122, 95, 0.4);
+            transition: background-color 0.2s, transform 0.1s;
         }
         .btn-start:hover {
-            background-color: #00cccc;
+            background-color: #d87c69;
+            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
 
+<h1>🐹 Đập Chuột Kẹo Ngọt 🍬</h1>
+<div class="subtitle">Chạm nhanh tay vào những chú chuột đáng yêu nhé!</div>
+
 <div class="info-container">
-    <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
-    <div>Thời gian: <span id="timer" style="color: #ff4b4b;">30</span>s</div>
+    <div>Điểm: <span id="score" style="color: #e07a5f;">0</span></div>
+    <div>Thời gian: <span id="timer" style="color: #f4a261;">30</span>s</div>
 </div>
 
 <div class="grid" id="grid">
@@ -87,7 +117,7 @@ whack_game_code = """
     <div class="hole" data-id="8"></div>
 </div>
 
-<button class="btn-start" id="startBtn" onclick="startGame()">Bắt đầu chơi</button>
+<button class="btn-start" id="startBtn" onclick="startGame()">Bắt Đầu Chơi 🌸</button>
 
 <script>
     const holes = document.querySelectorAll('.hole');
@@ -143,7 +173,7 @@ whack_game_code = """
         activeHole.classList.add('mole');
         activeHole.textContent = '🐹';
 
-        let speed = Math.max(400, 1000 - (score * 20)); // Càng về sau chuột hiện càng nhanh
+        let speed = Math.max(400, 1000 - (score * 20));
         moleTimer = setTimeout(showMole, speed);
     }
 
@@ -154,7 +184,12 @@ whack_game_code = """
                 score += 10;
                 scoreDisplay.textContent = score;
                 activeHole.classList.remove('mole');
-                activeHole.textContent = '';
+                activeHole.textContent = '✨';
+                setTimeout(() => {
+                    if(activeHole === hole) {
+                        activeHole.textContent = '';
+                    }
+                }, 150);
                 activeHole = null;
             }
         });
@@ -169,8 +204,8 @@ whack_game_code = """
             activeHole.textContent = '';
         }
         startBtn.style.display = 'block';
-        startBtn.textContent = 'Chơi Lại';
-        alert(`Hết giờ! Tổng số điểm của bạn là: ${score}`);
+        startBtn.textContent = 'Chơi Lại 🌸';
+        alert(`Hết giờ rồi! Tổng số điểm dễ thương của bạn là: ${score}`);
     }
 </script>
 
@@ -178,4 +213,4 @@ whack_game_code = """
 </html>
 """
 
-components.html(whack_game_code, height=520)
+components.html(cute_game_code, height=600)
