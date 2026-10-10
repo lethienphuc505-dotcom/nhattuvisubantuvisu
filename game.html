@@ -7,7 +7,7 @@
         * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
-            background-color: #1a1c29; color: #fff;
+            background-color: #03050a; color: #fff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; overflow: hidden;
@@ -15,53 +15,54 @@
         .container {
             position: relative;
             width: 400px; height: 520px;
-            border: 2px solid rgba(255,255,255,0.1); border-radius: 20px;
-            background: linear-gradient(135deg, #2b2d42, #11131a);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            border: 2px solid rgba(0,255,245,0.4); border-radius: 20px;
+            background-color: #03050a;
+            box-shadow: 0 0 30px rgba(0,255,245,0.2);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             overflow: hidden;
         }
         .menu-screen {
             position: absolute; width: 100%; height: 100%;
-            background: rgba(26, 28, 41, 0.92);
+            background: rgba(3, 5, 10, 0.95);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 10; transition: opacity 0.3s ease;
         }
         .menu-screen.hidden { opacity: 0; pointer-events: none; }
-        h1 { color: #ffb703; font-size: 26px; margin-bottom: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.4); text-align: center; }
-        .subtitle { color: #8d99ae; font-size: 13px; margin-bottom: 25px; text-align: center; }
+        h1 { color: #00fff5; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,245,0.7); text-align: center; }
+        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }
         
         .menu-btn {
             width: 200px; padding: 12px 0; margin: 8px 0;
             font-size: 16px; font-weight: 800;
-            background: linear-gradient(135deg, #fb8500, #ffb703);
-            color: #1a1c29; border: none; border-radius: 14px;
-            cursor: pointer; box-shadow: 0 6px 20px rgba(251,133,0,0.4);
+            background: linear-gradient(135deg, #00fff5, #7000ff);
+            color: #fff; border: none; border-radius: 14px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.4);
             transition: transform 0.1s, filter 0.2s;
         }
-        .menu-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .menu-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
         .menu-btn:active { transform: scale(0.95); }
 
         .hud {
-            position: absolute; top: 15px; left: 20px; right: 20px;
+            position: absolute; top: 12px; left: 16px; right: 16px;
             display: flex; justify-content: space-between;
-            font-size: 18px; font-weight: bold; z-index: 5;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            font-size: 15px; font-weight: bold; z-index: 5;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
         }
-        canvas { outline: none; cursor: pointer; }
+        canvas { outline: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="menu-screen" id="menuScreen">
-        <h1>🐱 FLAPPY CAT 🌸</h1>
-        <div class="subtitle">Nhấn Phím Cách hoặc Click để bay lên!</div>
-        <button class="menu-btn" onclick="startGame()">CHƠI NGAY ▶</button>
+        <h1>🛸 ALIEN SHOOTER 🌌</h1>
+        <div class="subtitle">Dùng Mũi tên/A-D để lái, Phím Cách để bắn Laser!</div>
+        <button class="menu-btn" onclick="startGame()">CHIẾN NGAY ▶</button>
     </div>
 
     <div class="hud">
-        <div>Điểm: <span id="score" style="color: #ffb703;">0</span></div>
+        <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
+        <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
     </div>
 
     <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
@@ -71,185 +72,204 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
     const menuScreen = document.getElementById("menuScreen");
 
-    let score = 0;
-    let isPlaying = false;
-    let gameInterval = null;
+    let score = 0, lives = 3, isPlaying = false, gameInterval = null;
+    let player = { x: 180, y: 430, width: 48, height: 42, speed: 6, dx: 0 };
+    let bullets = [], enemies = [], stars = [], enemyDirection = 1;
 
-    let cat = {
-        x: 80,
-        y: 240,
-        width: 36,
-        height: 30,
-        gravity: 0.5,
-        lift: -8.5,
-        velocity: 0
-    };
+    for(let i=0; i<60; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 1.5 + 0.5
+        });
+    }
 
-    let pipes = [];
-    let frameCount = 0;
+    function createEnemies() {
+        enemies = [];
+        let rows = 3, cols = 5, startX = 55, startY = 60, spacingX = 60, spacingY = 48;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 40, height: 32, alive: true });
+            }
+        }
+    }
 
     function startGame() {
         menuScreen.classList.add("hidden");
-        isPlaying = true;
-        score = 0;
-        cat.y = 240;
-        cat.velocity = 0;
-        pipes = [];
-        frameCount = 0;
-        scoreElement.textContent = score;
-        
+        isPlaying = true; score = 0; lives = 3; bullets = []; player.x = 180;
+        scoreElement.textContent = score; updateLivesDisplay(); createEnemies();
         canvas.focus();
-
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(gameLoop, 1000 / 60);
     }
 
-    function gameLoop() {
-        update();
-        draw();
+    function updateLivesDisplay() {
+        let hearts = "";
+        for(let i=0; i<lives; i++) hearts += "❤️";
+        livesElement.textContent = hearts;
     }
 
-    function update() {
-        // Trọng lực kéo mèo rơi xuống
-        cat.velocity += cat.gravity;
-        cat.y += cat.velocity;
+    function gameLoop() { update(); draw(); }
 
-        // Chạm đất hoặc bay quá trần nhà -> Thua
-        if (cat.y + cat.height >= canvas.height || cat.y <= 0) {
-            endGame();
+    function update() {
+        player.x += player.dx;
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].y -= 12;
+            if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // Tạo ống cống mới định kỳ
-        if (frameCount % 90 === 0) {
-            let minHeight = 60;
-            let maxHeight = 240;
-            let topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
-            let gap = 130; // Khoảng trống giữa ống trên và ống dưới
+        let hitEdge = false, aliveCount = 0;
+        enemies.forEach(e => {
+            if (!e.alive) return;
+            aliveCount++;
+            e.x += 0.8 * enemyDirection;
+            if (e.x <= 20 || e.x + e.width >= canvas.width - 20) hitEdge = true;
+        });
 
-            pipes.push({
-                x: canvas.width,
-                top: topHeight,
-                bottom: canvas.height - topHeight - gap,
-                width: 55,
-                passed: false
+        if (hitEdge) {
+            enemyDirection *= -1;
+            enemies.forEach(e => {
+                e.y += 12;
+                if (e.y + e.height >= player.y) endGame();
             });
         }
 
-        // Cập nhật vị trí các ống cống
-        for (let i = pipes.length - 1; i >= 0; i--) {
-            pipes[i].x -= 2.8;
+        if (aliveCount === 0) createEnemies();
 
-            // Kiểm tra va chạm với mèo
-            if (
-                cat.x < pipes[i].x + pipes[i].width &&
-                cat.x + cat.width > pipes[i].x &&
-                (cat.y < pipes[i].top || cat.y + cat.height > canvas.height - pipes[i].bottom)
-            ) {
-                endGame();
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            let bulletHit = false;
+            for (let j = 0; j < enemies.length; j++) {
+                let e = enemies[j];
+                if (e.alive && bullets[i].x > e.x && bullets[i].x < e.x + e.width && bullets[i].y > e.y && bullets[i].y < e.y + e.height) {
+                    e.alive = false; bulletHit = true; score += 20; scoreElement.textContent = score; break;
+                }
             }
-
-            // Cộng điểm khi vượt qua ống
-            if (!pipes[i].passed && pipes[i].x + pipes[i].width < cat.x) {
-                score += 10;
-                scoreElement.textContent = score;
-                pipes[i].passed = true;
-            }
-
-            // Xóa ống khi ra khỏi màn hình
-            if (pipes[i].x + pipes[i].width < 0) {
-                pipes.splice(i, 1);
-            }
+            if (bulletHit) bullets.splice(i, 1);
         }
 
-        frameCount++;
+        stars.forEach(star => {
+            star.y += star.speed;
+            if (star.y > canvas.height) star.y = 0;
+        });
     }
 
     function draw() {
-        // Nền trời
-        ctx.fillStyle = "#212538";
+        ctx.fillStyle = "#03050a";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Vẽ các ống cống phong cách dễ thương (Màu xanh mint)
-        pipes.forEach(p => {
-            ctx.fillStyle = "#48bfe3";
-            // Ống trên
-            ctx.fillRect(p.x, 0, p.width, p.top);
-            ctx.fillStyle = "#56cfe1";
-            ctx.fillRect(p.x - 4, p.top - 16, p.width + 8, 16);
+        ctx.fillStyle = "#ffffff";
+        stars.forEach(star => { ctx.fillRect(star.x, star.y, star.size, star.size); });
 
-            // Ống dưới
-            ctx.fillStyle = "#48bfe3";
-            ctx.fillRect(p.x, canvas.height - p.bottom, p.width, p.bottom);
-            ctx.fillStyle = "#56cfe1";
-            ctx.fillRect(p.x - 4, canvas.height - p.bottom, p.width + 8, 16);
-        });
+        // --- TÀU PHI THUYỀN XANH NGỌC HẦM HỐ ---
+        let px = player.x, py = player.y;
+        
+        // Động cơ phản lực
+        ctx.fillStyle = "#ff5964";
+        ctx.fillRect(px + 10, py + player.height, 6, 10 + Math.random() * 6);
+        ctx.fillRect(px + player.width - 16, py + player.height, 6, 10 + Math.random() * 6);
 
-        // --- VẼ CHÚ MÈO 3D/HOẠT HÌNH ---
-        let cx = cat.x;
-        let cy = cat.y;
+        // Thân tàu góc cạnh
+        ctx.fillStyle = "#00b4d8";
+        ctx.beginPath();
+        ctx.moveTo(px + player.width / 2, py);
+        ctx.lineTo(px, py + player.height);
+        ctx.lineTo(px + player.width, py + player.height);
+        ctx.closePath();
+        ctx.fill();
 
-        // Thân mèo màu vàng cam ấm áp
+        // Giáp cạnh màu trắng/xám
+        ctx.fillStyle = "#90e0ef";
+        ctx.beginPath();
+        ctx.moveTo(px + player.width / 2, py + 4);
+        ctx.lineTo(px + 6, py + player.height - 4);
+        ctx.lineTo(px + player.width - 6, py + player.height - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Buồng lái vàng phát sáng
         ctx.fillStyle = "#ffb703";
         ctx.beginPath();
-        ctx.ellipse(cx + 18, cy + 15, 18, 15, 0, 0, Math.PI * 2);
+        ctx.ellipse(px + player.width / 2, py + 20, 5, 12, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Tai mèo nhọn xinh xắn
-        ctx.beginPath();
-        ctx.moveTo(cx + 4, cy + 5);
-        ctx.lineTo(cx + 2, cy - 8);
-        ctx.lineTo(cx + 14, cy + 2);
-        ctx.fill();
+        // --- TIA LASER VÀNG RỰC RỠ TRÊN ĐẦU PHI THUYỀN ---
+        ctx.fillStyle = "#ffb703";
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ffb703";
+        ctx.fillRect(px + player.width / 2 - 3, 0, 6, py);
+        ctx.shadowBlur = 0; // Reset hiệu ứng
 
-        ctx.beginPath();
-        ctx.moveTo(cx + 32, cy + 5);
-        ctx.lineTo(cx + 34, cy - 8);
-        ctx.lineTo(cx + 22, cy + 2);
-        ctx.fill();
+        // Đạn thường hai bên
+        ctx.fillStyle = "#ffb703";
+        bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 14); });
 
-        // Má hồng phúng phính
-        ctx.fillStyle = "#ff5964";
-        ctx.beginPath();
-        ctx.arc(cx + 8, cy + 18, 4, 0, Math.PI * 2);
-        ctx.arc(cx + 28, cy + 18, 4, 0, Math.PI * 2);
-        ctx.fill();
+        // --- ĐÀN QUÁI VẬT CÔN TRÙNG VŨ TRỤ ---
+        enemies.forEach(e => {
+            if (!e.alive) return;
+            let ex = e.x, ey = e.y;
 
-        // Mắt mèo tròn đen bóng
-        ctx.fillStyle = "#1a1c29";
-        ctx.beginPath();
-        ctx.arc(cx + 12, cy + 12, 3, 0, Math.PI * 2);
-        ctx.arc(cx + 24, cy + 12, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
+            // Thân côn trùng hồng/tím
+            ctx.fillStyle = "#f72585";
+            ctx.beginPath();
+            ctx.ellipse(ex + e.width/2, ey + e.height/2, 14, 12, 0, 0, Math.PI*2);
+            ctx.fill();
 
-    function jump() {
-        if (!isPlaying) return;
-        cat.velocity = cat.lift;
+            // Cánh côn trùng pha hồng-vàng
+            ctx.fillStyle = "#ffb703";
+            ctx.beginPath();
+            ctx.moveTo(ex, ey + 4);
+            ctx.lineTo(ex - 12, ey - 6);
+            ctx.lineTo(ex + 4, ey + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(ex + e.width, ey + 4);
+            ctx.lineTo(ex + e.width + 12, ey - 6);
+            ctx.lineTo(ex + e.width - 4, ey + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Mắt xanh ngọc
+            ctx.fillStyle = "#4cc9f0";
+            ctx.beginPath();
+            ctx.arc(ex + e.width/2, ey + 8, 5, 0, Math.PI*2);
+            ctx.fill();
+        });
     }
 
     function endGame() {
         isPlaying = false;
         clearInterval(gameInterval);
-        
-        menuScreen.querySelector("h1").textContent = "GAME OVER 😿";
+        menuScreen.querySelector("h1").textContent = "GAME OVER 💀";
         menuScreen.querySelector(".menu-btn").textContent = "CHƠI LẠI 🔄";
         menuScreen.classList.remove("hidden");
     }
 
-    // Điều khiển bằng phím Cách hoặc click chuột/phím mũi tên lên
     window.addEventListener("keydown", (e) => {
+        if (!isPlaying) return;
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
         if (e.key === " " || e.key === "ArrowUp") {
-            jump();
+            bullets.push({ x: player.x + 10, y: player.y });
+            bullets.push({ x: player.x + player.width - 10, y: player.y });
             e.preventDefault();
         }
     });
 
-    canvas.addEventListener("click", () => {
-        jump();
-        canvas.focus();
+    window.addEventListener("keyup", (e) => {
+        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
+        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
     });
+
+    canvas.addEventListener("click", () => { canvas.focus(); });
 </script>
 
 </body>
