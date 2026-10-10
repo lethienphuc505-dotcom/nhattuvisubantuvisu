@@ -76,7 +76,7 @@
     const menuScreen = document.getElementById("menuScreen");
 
     let score = 0, lives = 3, isPlaying = false, gameInterval = null;
-    let player = { x: 175, y: 420, width: 44, height: 44, speed: 6.5, dx: 0 };
+    let player = { x: 175, y: 410, width: 48, height: 48, speed: 6.5, dx: 0 };
     let bullets = [], enemies = [], stars = [], particles = [], enemyDirection = 1;
 
     for(let i=0; i<80; i++) {
@@ -208,7 +208,7 @@
             ctx.restore();
         });
 
-        // --- VẼ TIA LASER KHỦNG KHIẾP ---
+        // --- TIA LASER KHỦNG KHIẾP ---
         ctx.save();
         ctx.shadowBlur = 25;
         ctx.shadowColor = "#ffaa00";
@@ -218,53 +218,87 @@
         ctx.fillRect(player.x + player.width/2 - 2, 0, 4, player.y);
         ctx.restore();
 
-        // --- HÀM VẼ TÀU NGƯỜI CHƠI (PLAYER - PIXEL ART STYLE) ---
+        // --- VẼ CHIẾN TÀU PLAYER DỰA TRÊN MÃ SVG PIXEL ART CỦA BẠN ---
         let px = player.x, py = player.y;
-        let ps = 3; // Kích thước mỗi khối pixel
+        let s = 1.5; // Tỷ lệ scale pixel
 
-        // Động cơ phun lửa
+        // Động cơ phun lửa rực cháy
         ctx.fillStyle = "#ff5500";
-        ctx.fillRect(px + ps*3, py + ps*13, ps*2, ps*2);
-        ctx.fillRect(px + ps*8, py + ps*13, ps*2, ps*2);
+        ctx.fillRect(px + 12*s, py + 25*s, 2*s, 4*s);
+        ctx.fillRect(px + 18*s, py + 25*s, 2*s, 4*s);
         ctx.fillStyle = "#ffcc00";
-        ctx.fillRect(px + ps*4, py + ps*14, ps, ps);
-        ctx.fillRect(px + ps*9, py + ps*14, ps, ps);
+        ctx.fillRect(px + 13*s, py + 29*s, 1*s, 2*s);
+        ctx.fillRect(px + 18*s, py + 29*s, 1*s, 2*s);
+        ctx.fillStyle = "#ff0055";
+        ctx.fillRect(px + 11*s, py + 23*s, 3*s, 2*s);
+        ctx.fillRect(px + 18*s, py + 23*s, 3*s, 2*s);
 
-        // Thân tàu chính & Cánh vát nhọn
-        ctx.fillStyle = "#0077b6";
-        ctx.fillRect(px + ps*4, py + ps*3, ps*5, ps*10);
+        // Thân tàu chính & Giáp đa lớp
+        ctx.fillStyle = "#00ffff";
+        ctx.fillRect(px + 15*s, py + 1*s, 2*s, 3*s);
         ctx.fillStyle = "#00b4d8";
-        ctx.fillRect(px + ps*5, py + ps*2, ps*3, ps*3);
-        
-        // Cánh hai bên
+        ctx.fillRect(px + 14*s, py + 4*s, 4*s, 3*s);
+        ctx.fillStyle = "#0077b6";
+        ctx.fillRect(px + 13*s, py + 7*s, 6*s, 5*s);
+        ctx.fillStyle = "#03045e";
+        ctx.fillRect(px + 12*s, py + 12*s, 8*s, 7*s);
+        ctx.fillStyle = "#00b4d8";
+        ctx.fillRect(px + 13*s, py + 13*s, 6*s, 5*s);
+
+        // Buồng lái năng lượng phát sáng
+        ctx.fillStyle = "#ffb703";
+        ctx.fillRect(px + 15*s, py + 6*s, 2*s, 4*s);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 15*s, py + 7*s, 1*s, 2*s);
+
+        // Cánh vát nhọn góc cạnh
         ctx.fillStyle = "#ff007f";
-        ctx.fillRect(px + ps*2, py + ps*6, ps*3, ps*4);
-        ctx.fillRect(px + ps, py + ps*8, ps*2, ps*3);
-        ctx.fillRect(px + ps*8, py + ps*6, ps*3, ps*4);
-        ctx.fillRect(px + ps*10, py + ps*8, ps*2, ps*3);
+        ctx.fillRect(px + 9*s, py + 13*s, 3*s, 4*s);
+        ctx.fillRect(px + 6*s, py + 15*s, 3*s, 4*s);
+        ctx.fillStyle = "#7209b7";
+        ctx.fillRect(px + 3*s, py + 17*s, 3*s, 4*s);
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(px + 2*s, py + 21*s, 2*s, 3*s);
+
+        ctx.fillStyle = "#ff007f";
+        ctx.fillRect(px + 20*s, py + 13*s, 3*s, 4*s);
+        ctx.fillRect(px + 23*s, py + 15*s, 3*s, 4*s);
+        ctx.fillStyle = "#7209b7";
+        ctx.fillRect(px + 26*s, py + 17*s, 3*s, 4*s);
+        ctx.fillStyle = "#ff5500";
+        ctx.fillRect(px + 28*s, py + 21*s, 2*s, 3*s);
 
         // Đại bác plasma gắn trên cánh
         ctx.fillStyle = "#00f0ff";
-        ctx.fillRect(px + ps, py + ps*7, ps, ps*2);
-        ctx.fillRect(px + ps*11, py + ps*7, ps, ps*2);
-
-        // Buồng lái phát sáng
-        ctx.fillStyle = "#ffb703";
-        ctx.fillRect(px + ps*5, py + ps*3, ps*3, ps*3);
+        ctx.fillRect(px + 3*s, py + 14*s, 2*s, 4*s);
+        ctx.fillRect(px + 27*s, py + 14*s, 2*s, 4*s);
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(px + ps*6, py + ps*4, ps, ps);
+        ctx.fillRect(px + 3*s, py + 13*s, 2*s, 1*s);
+        ctx.fillRect(px + 27*s, py + 13*s, 2*s, 1*s);
+
+        // Vây ổn định đuôi tàu
+        ctx.fillStyle = "#90e0ef";
+        ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
+        ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
+
+        // Điểm nhấn phát sáng (Highlights)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 15*s, py + 2*s, 1*s, 1*s);
+        ctx.fillStyle = "#90e0ef";
+        ctx.fillRect(px + 14*s, py + 9*s, 1*s, 2*s);
+        ctx.fillRect(px + 17*s, py + 9*s, 1*s, 2*s);
 
         // Đạn laser nhỏ hai bên
         ctx.fillStyle = "#ffaa00";
         bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 16); });
 
-        // --- HÀM VẼ QUÁI VẬT NGOÀI HÀNH TINH (ALIEN - PIXEL ART STYLE) ---
+        // --- VẼ QUÁI VẬT NGOÀI HÀNH TINH (ALIEN) ---
         enemies.forEach(e => {
             if (!e.alive) return;
             let ex = e.x, ey = e.y + Math.sin(e.anim) * 3;
-            let es = 2.5; // Kích thước pixel của địch
+            let es = 2.2;
 
-            // Cánh côn trùng ngoài hành tinh rực rỡ
+            // Cánh côn trùng ngoài hành tinh
             ctx.fillStyle = "#ff007f";
             ctx.fillRect(ex + es, ey + es*3, es*3, es*3);
             ctx.fillRect(ex - es*2, ey + es, es*3, es*2);
@@ -301,8 +335,8 @@
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
         if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
         if (e.key === " " || e.key === "ArrowUp") {
-            bullets.push({ x: player.x + 14, y: player.y });
-            bullets.push({ x: player.x + player.width - 14, y: player.y });
+            bullets.push({ x: player.x + 16, y: player.y });
+            bullets.push({ x: player.x + player.width - 16, y: player.y });
             e.preventDefault();
         }
     });
