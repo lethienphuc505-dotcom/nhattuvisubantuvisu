@@ -7,336 +7,169 @@ st.set_page_config(
     layout="centered"
 )
 
-galaxy_code = r"""
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0; padding: 0;
-            background-color: #050811; color: #fff;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .container {
-            position: relative;
-            width: 400px; height: 520px;
-            border: 2px solid #1f2937; border-radius: 16px;
-            background-color: #03050a;
-            box-shadow: 0 12px 35px rgba(0,255,245,0.15);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-        .menu-screen {
-            position: absolute; width: 100%; height: 100%;
-            background: rgba(3, 5, 10, 0.94);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10;
-            transition: opacity 0.3s ease;
-        }
-        .menu-screen.hidden {
-            opacity: 0; pointer-events: none;
-        }
-        h1 { color: #00fff5; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,245,0.6); text-align: center; }
-        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }
-        
-        .menu-btn {
-            width: 200px; padding: 12px 0;
-            margin: 8px 0; font-size: 16px; font-weight: 800;
-            background: linear-gradient(135deg, #00fff5, #7000ff);
-            color: #fff; border: none; border-radius: 14px;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.3);
-            transition: transform 0.1s, filter 0.2s;
-        }
-        .menu-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .menu-btn:active { transform: scale(0.95); }
-        .menu-btn.mode-btn {
-            background: linear-gradient(135deg, #fb8500, #ffb703);
-            color: #03050a;
-            box-shadow: 0 4px 15px rgba(251,133,0,0.3);
-        }
-        
-        .hud {
-            position: absolute; top: 12px; left: 16px; right: 16px;
-            display: flex; justify-content: space-between;
-            font-size: 15px; font-weight: bold; z-index: 5;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-        }
-        canvas { outline: none; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="menu-screen" id="menuScreen">
-        <h1>🛸 GALAXY ATTACK 🌌</h1>
-        <div class="subtitle" id="modeText">Chế độ: Đội Hình Xâm Lược</div>
-        
-        <button class="menu-btn" onclick="startGame()">CHIẾN NGAY ▶</button>
-        <button class="menu-btn mode-btn" onclick="toggleMode()">ĐỔI ĐỘ KHÓ ⚙️</button>
-    </div>
-
-    <div class="hud">
-        <div>Điểm: <span id="score" style="color: #00fff5;">0</span></div>
-        <div>Mạng: <span id="lives" style="color: #ff4b4b;">❤️❤️❤️</span></div>
-    </div>
-
-    <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
-</div>
-
-<script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const scoreElement = document.getElementById("score");
-    const livesElement = document.getElementById("lives");
-    const menuScreen = document.getElementById("menuScreen");
-    const modeText = document.getElementById("modeText");
-
-    let score = 0;
-    let lives = 3;
-    let isPlaying = false;
-    let gameInterval = null;
-    let currentMode = 'normal'; // 'normal' hoặc 'hard'
-
-    let player = {
-        x: 180,
-        y: 440,
-        width: 44,
-        height: 38,
-        speed: 5.5,
-        dx: 0
-    };
-
-    let bullets = [];
-    let enemyBullets = [];
-    let enemies = [];
-    let stars = [];
-    let enemyDirection = 1; // Hướng di chuyển đội hình địch sang trái/phải
-
-    for(let i=0; i<50; i++) {
-        stars.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2 + 0.5,
-            speed: Math.random() * 1.5 + 0.5
-        });
-    }
-
-    function toggleMode() {
-        if (currentMode === 'normal') {
-            currentMode = 'hard';
-            modeText.textContent = "Chế độ: Ác Mộng (Địch bắn đạn 🔥)";
-            modeText.style.color = "#ff4b4b";
-        } else {
-            currentMode = 'normal';
-            modeText.textContent = "Chế độ: Đội Hình Xâm Lược 🌸";
-            modeText.style.color = "#00fff5";
-        }
-    }
-
-    function createEnemies() {
-        enemies = [];
-        let rows = 3;
-        let cols = 6;
-        let startX = 45;
-        let startY = 60;
-        let spacingX = 52;
-        let spacingY = 45;
-
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                enemies.push({
-                    x: startX + c * spacingX,
-                    y: startY + r * spacingY,
-                    width: 36,
-                    height: 30,
-                    alive: true
-                });
-            }
-        }
-    }
-
-    function startGame() {
-        menuScreen.classList.add("hidden");
-        isPlaying = true;
-        score = 0;
-        lives = 3;
-        bullets = [];
-        enemyBullets = [];
-        player.x = 180;
-        scoreElement.textContent = score;
-        updateLivesDisplay();
-        createEnemies();
-        
-        canvas.focus();
-
-        if (gameInterval) clearInterval(gameInterval);
-        gameInterval = setInterval(gameLoop, 1000 / 60);
-    }
-
-    function updateLivesDisplay() {
-        let hearts = "";
-        for(let i=0; i<lives; i++) hearts += "❤️";
-        livesElement.textContent = hearts;
-    }
-
-    function gameLoop() {
-        update();
-        draw();
-    }
-
-    function update() {
-        // Di chuyển người chơi
-        player.x += player.dx;
-        if (player.x < 0) player.x = 0;
-        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-
-        // Cập nhật đạn người chơi (Bắn đạn đôi)
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].y -= 11;
-            if (bullets[i].y < 0) bullets.splice(i, 1);
-        }
-
-        // Cập nhật đạn của địch (nếu ở chế độ khó)
-        for (let i = enemyBullets.length - 1; i >= 0; i--) {
-            enemyBullets[i].y += 4.5;
-            // Va chạm đạn địch với người chơi
-            if (
-                enemyBullets[i].x > player.x &&
-                enemyBullets[i].x < player.x + player.width &&
-                enemyBullets[i].y > player.y &&
-                enemyBullets[i].y < player.y + player.height
-            ) {
-                enemyBullets.splice(i, 1);
-                lives--;
-                updateLivesDisplay();
-                if (lives <= 0) endGame();
-                continue;
-            }
-            if (enemyBullets[i].y > canvas.height) enemyBullets.splice(i, 1);
-        }
-
-        // Di chuyển đội hình địch qua lại
-        let hitEdge = false;
-        let aliveCount = 0;
-        let enemySpeed = currentMode === 'hard' ? 1.2 : 0.8;
-
-        enemies.forEach(e => {
-            if (!e.alive) return;
-            aliveCount++;
-            e.x += enemySpeed * enemyDirection;
-            if (e.x <= 15 || e.x + e.width >= canvas.width - 15) {
-                hitEdge = true;
-            }
-        });
-
-        if (hitEdge) {
-            enemyDirection *= -1;
-            enemies.forEach(e => {
-                e.y += 12; // Đội hình tiến sát xuống dần
-                // Nếu địch chạm đáy màn hình -> Game Over
-                if (e.y + e.height >= player.y) {
-                    endGame();
-                }
-            });
-        }
-
-        // Nếu tiêu diệt hết đội hình -> Tự động sinh ra đợt mới khó hơn chút
-        if (aliveCount === 0) {
-            createEnemies();
-        }
-
-        // Địch bắn đạn ngẫu nhiên
-        if (currentMode === 'hard' && Math.random() < 0.04) {
-            let livingEnemies = enemies.filter(e => e.alive);
-            if (livingEnemies.length > 0) {
-                let shooter = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];
-                enemyBullets.push({ x: shooter.x + shooter.width / 2, y: shooter.y + shooter.height });
-            }
-        }
-
-        // Kiểm tra đạn của người chơi bắn trúng đội hình địch
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            let bulletHit = false;
-            for (let j = 0; j < enemies.length; j++) {
-                let e = enemies[j];
-                if (e.alive &&
-                    bullets[i].x > e.x &&
-                    bullets[i].x < e.x + e.width &&
-                    bullets[i].y > e.y &&
-                    bullets[i].y < e.y + e.height
-                ) {
-                    e.alive = false;
-                    bulletHit = true;
-                    score += 20;
-                    scoreElement.textContent = score;
-                    break;
-                }
-            }
-            if (bulletHit) {
-                bullets.splice(i, 1);
-            }
-        }
-
-        // Di chuyển sao nền
-        stars.forEach(star => {
-            star.y += star.speed;
-            if (star.y > canvas.height) star.y = 0;
-        });
-    }
-
-    function draw() {
-        ctx.fillStyle = "#03050a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Vẽ sao
-        ctx.fillStyle = "#ffffff";
-        stars.forEach(star => {
-            ctx.fillRect(star.x, star.y, star.size, star.size);
-        });
-
-        // --- VẼ PHI THUYỀN GALAXY (ĐẠI BÀNG XANH) ---
-        let px = player.x;
-        let py = player.y;
-
-        // Cánh phụ
-        ctx.fillStyle = "#3a86ff";
-        ctx.fillRect(px, py + 16, 10, 16);
-        ctx.fillRect(px + player.width - 10, py + 16, 10, 16);
-
-        // Thân phi thuyền chính
-        ctx.fillStyle = "#00fff5";
-        ctx.beginPath();
-        ctx.moveTo(px + player.width / 2, py);
-        ctx.lineTo(px + 4, py + player.height);
-        ctx.lineTo(px + player.width - 4, py + player.height);
-        ctx.closePath();
-        ctx.fill();
-
-        // Buồng lái vàng rực rỡ
-        ctx.fillStyle = "#ffb703";
-        ctx.beginPath();
-        ctx.ellipse(px + player.width / 2, py + 18, 5, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Lửa phản lực đuôi tàu
-        ctx.fillStyle = "#ff5964";
-        ctx.fillRect(px + 12, py + player.height, 6, 8 + Math.random() * 6);
-        ctx.fillRect(px + player.width - 18, py + player.height, 6, 8 + Math.random() * 6);
-
-        // --- VẼ ĐẠN ĐÔI ---
-        ctx.fillStyle = "#ffb703";
-        bullets.forEach(b => {
-            ctx.fillRect(b.x - 2, b.y, 4, 14);
-        });
-
-        // --- VẼ ĐẠN ĐỊCH ---
-        ctx.fillStyle = "#ff4b4b";
-        enemyBullets.forEach(eb => {
-            ctx.beginPath();
-            ctx.arc(eb.x, eb.y, 4
+galaxy_code = "\n".join([
+    "<!DOCTYPE html>",
+    "<html lang=\"vi\">",
+    "<head>",
+    "    <meta charset=\"UTF-8\">",
+    "    <link href=\"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap\" rel=\"stylesheet\">",
+    "    <style>",
+    "        * { box-sizing: border-box; }",
+    "        body {",
+    "            margin: 0; padding: 0;",
+    "            background-color: #03050a; color: #fff;",
+    "            font-family: 'Plus Jakarta Sans', sans-serif;",
+    "            display: flex; flex-direction: column; align-items: center; justify-content: center;",
+    "            height: 100vh;",
+    "            overflow: hidden;",
+    "        }",
+    "        .container {",
+    "            position: relative;",
+    "            width: 400px; height: 520px;",
+    "            border: 2px solid #1f2937; border-radius: 16px;",
+    "            background-color: #03050a;",
+    "            box-shadow: 0 12px 35px rgba(0,255,245,0.15);",
+    "            display: flex; flex-direction: column; align-items: center; justify-content: center;",
+    "            overflow: hidden;",
+    "        }",
+    "        .menu-screen {",
+    "            position: absolute; width: 100%; height: 100%;",
+    "            background: rgba(3, 5, 10, 0.94);",
+    "            display: flex; flex-direction: column; align-items: center; justify-content: center;",
+    "            z-index: 10;",
+    "            transition: opacity 0.3s ease;",
+    "        }",
+    "        .menu-screen.hidden {",
+    "            opacity: 0; pointer-events: none;",
+    "        }",
+    "        h1 { color: #00fff5; font-size: 26px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,245,0.6); text-align: center; }",
+    "        .subtitle { color: #8892b0; font-size: 13px; margin-bottom: 25px; text-align: center; }",
+    "        .menu-btn {",
+    "            width: 200px; padding: 12px 0;",
+    "            margin: 8px 0; font-size: 16px; font-weight: 800;",
+    "            background: linear-gradient(135deg, #00fff5, #7000ff);",
+    "            color: #fff; border: none; border-radius: 14px;",
+    "            cursor: pointer; box-shadow: 0 4px 15px rgba(0,255,245,0.3);",
+    "            transition: transform 0.1s, filter 0.2s;",
+    "        }",
+    "        .menu-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }",
+    "        .menu-btn:active { transform: scale(0.95); }",
+    "        .menu-btn.mode-btn {",
+    "            background: linear-gradient(135deg, #fb8500, #ffb703);",
+    "            color: #03050a;",
+    "            box-shadow: 0 4px 15px rgba(251,133,0,0.3);",
+    "        }",
+    "        .hud {",
+    "            position: absolute; top: 12px; left: 16px; right: 16px;",
+    "            display: flex; justify-content: space-between;",
+    "            font-size: 15px; font-weight: bold; z-index: 5;",
+    "            text-shadow: 0 2px 4px rgba(0,0,0,0.8);",
+    "        }",
+    "        canvas { outline: none; }",
+    "    </style>",
+    "</head>",
+    "<body>",
+    "<div class=\"container\">",
+    "    <div class=\"menu-screen\" id=\"menuScreen\">",
+    "        <h1>🛸 GALAXY ATTACK 🌌</h1>",
+    "        <div class=\"subtitle\" id=\"modeText\">Chế độ: Đội Hình Xâm Lược</div>",
+    "        <button class=\"menu-btn\" onclick=\"startGame()\">CHIẾN NGAY ▶</button>",
+    "        <button class=\"menu-btn mode-btn\" onclick=\"toggleMode()\">ĐỔI ĐỘ KHÓ ⚙️</button>",
+    "    </div>",
+    "    <div class=\"hud\">",
+    "        <div>Điểm: <span id=\"score\" style=\"color: #00fff5;\">0</span></div>",
+    "        <div>Mạng: <span id=\"lives\" style=\"color: #ff4b4b;\">❤️❤️❤️</span></div>",
+    "    </div>",
+    "    <canvas id=\"gameCanvas\" width=\"400\" height=\"520\" tabindex=\"1\"></canvas>",
+    "</div>",
+    "<script>",
+    "    const canvas = document.getElementById(\"gameCanvas\");",
+    "    const ctx = canvas.getContext(\"2d\");",
+    "    const scoreElement = document.getElementById(\"score\");",
+    "    const livesElement = document.getElementById(\"lives\");",
+    "    const menuScreen = document.getElementById(\"menuScreen\");",
+    "    const modeText = document.getElementById(\"modeText\");",
+    "    let score = 0, lives = 3, isPlaying = false, gameInterval = null, currentMode = 'normal';",
+    "    let player = { x: 180, y: 440, width: 44, height: 38, speed: 5.5, dx: 0 };",
+    "    let bullets = [], enemyBullets = [], enemies = [], stars = [], enemyDirection = 1;",
+    "    for(let i=0; i<50; i++) {",
+    "        stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 + 0.5, speed: Math.random() * 1.5 + 0.5 });",
+    "    }",
+    "    function toggleMode() {",
+    "        if (currentMode === 'normal') {",
+    "            currentMode = 'hard';",
+    "            modeText.textContent = \"Chế độ: Ác Mộng (Địch bắn đạn 🔥)\";",
+    "            modeText.style.color = \"#ff4b4b\";",
+    "        } else {",
+    "            currentMode = 'normal';",
+    "            modeText.textContent = \"Chế độ: Đội Hình Xâm Lược 🌸\";",
+    "            modeText.style.color = \"#00fff5\";",
+    "        }",
+    "    }",
+    "    function createEnemies() {",
+    "        enemies = [];",
+    "        let rows = 3, cols = 6, startX = 45, startY = 60, spacingX = 52, spacingY = 45;",
+    "        for (let r = 0; r < rows; r++) {",
+    "            for (let c = 0; c < cols; c++) {",
+    "                enemies.push({ x: startX + c * spacingX, y: startY + r * spacingY, width: 36, height: 30, alive: true });",
+    "            }",
+    "        }",
+    "    }",
+    "    function startGame() {",
+    "        menuScreen.classList.add(\"hidden\");",
+    "        isPlaying = true; score = 0; lives = 3; bullets = []; enemyBullets = []; player.x = 180;",
+    "        scoreElement.textContent = score; updateLivesDisplay(); createEnemies();",
+    "        canvas.focus();",
+    "        if (gameInterval) clearInterval(gameInterval);",
+    "        gameInterval = setInterval(gameLoop, 1000 / 60);",
+    "    }",
+    "    function updateLivesDisplay() {",
+    "        let hearts = \"\";",
+    "        for(let i=0; i<lives; i++) hearts += \"❤️\";",
+    "        livesElement.textContent = hearts;",
+    "    }",
+    "    function gameLoop() { update(); draw(); }",
+    "    function update() {",
+    "        player.x += player.dx;",
+    "        if (player.x < 0) player.x = 0;",
+    "        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;",
+    "        for (let i = bullets.length - 1; i >= 0; i--) {",
+    "            bullets[i].y -= 11;",
+    "            if (bullets[i].y < 0) bullets.splice(i, 1);",
+    "        }",
+    "        for (let i = enemyBullets.length - 1; i >= 0; i--) {",
+    "            enemyBullets[i].y += 4.5;",
+    "            if (enemyBullets[i].x > player.x && enemyBullets[i].x < player.x + player.width && enemyBullets[i].y > player.y && enemyBullets[i].y < player.y + player.height) {",
+    "                enemyBullets.splice(i, 1); lives--; updateLivesDisplay();",
+    "                if (lives <= 0) endGame();",
+    "                continue;",
+    "            }",
+    "            if (enemyBullets[i].y > canvas.height) enemyBullets.splice(i, 1);",
+    "        }",
+    "        let hitEdge = false, aliveCount = 0, enemySpeed = currentMode === 'hard' ? 1.2 : 0.8;",
+    "        enemies.forEach(e => {",
+    "            if (!e.alive) return;",
+    "            aliveCount++;",
+    "            e.x += enemySpeed * enemyDirection;",
+    "            if (e.x <= 15 || e.x + e.width >= canvas.width - 15) hitEdge = true;",
+    "        });",
+    "        if (hitEdge) {",
+    "            enemyDirection *= -1;",
+    "            enemies.forEach(e => {",
+    "                e.y += 12;",
+    "                if (e.y + e.height >= player.y) endGame();",
+    "            });",
+    "        }",
+    "        if (aliveCount === 0) createEnemies();",
+    "        if (currentMode === 'hard' && Math.random() < 0.04) {",
+    "            let livingEnemies = enemies.filter(e => e.alive);",
+    "            if (livingEnemies.length > 0) {",
+    "                let shooter = livingEnemies[Math.floor(Math.random() * livingEnemies.length)];",
+    "                enemyBullets.push({ x: shooter.x + shooter.width / 2, y: shooter.y + shooter.height });",
+    "            }",
+    "        }",
+    "        for (let i = bullets.length - 1; i >= 0; i--) {",
+    "            let bulletHit = false;",
+    "            for (let j = 0; j < enemies.length; j++) {",
+    "                let e = enemies[j];",
+    "                if (e.alive && bullets[i].x > e.x &&
