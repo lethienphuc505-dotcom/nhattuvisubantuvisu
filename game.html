@@ -513,4 +513,176 @@
                 let ex = e.x, ey = e.y, es = 1.6;
 
                 ctx.fillStyle = "#ff007f";
-                ctx.fillRect(ex + 2*es, ey + 6*es, 4*es, 4*
+                ctx.fillRect(ex + 2*es, ey + 6*es, 4*es, 4*es);
+                ctx.fillRect(ex - 2*es, ey + 4*es, 4*es, 3*es);
+                ctx.fillRect(ex + 15*es, ey + 6*es, 4*es, 4*es);
+                ctx.fillRect(ex + 19*es, ey + 4*es, 4*es, 3*es);
+
+                ctx.fillStyle = "#560bad";
+                ctx.fillRect(ex + 5*es, ey + 4*es, 11*es, 11*es);
+                ctx.fillStyle = "#7209b7";
+                ctx.fillRect(ex + 6*es, ey + 5*es, 9*es, 9*es);
+
+                ctx.fillStyle = "#f77f00";
+                ctx.fillRect(ex + 7*es, ey + 2*es, 7*es, 4*es);
+                ctx.fillStyle = "#fcbf49";
+                ctx.fillRect(ex + 9*es, ey + 1*es, 3*es, 2*es);
+
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "#ff0055";
+                ctx.fillStyle = "#ff0055";
+                ctx.fillRect(ex + 7*es, ey + 6*es, 2*es, 3*es);
+                ctx.fillRect(ex + 12*es, ey + 6*es, 2*es, 3*es);
+                ctx.restore();
+
+                ctx.fillStyle = "#4cc9f0";
+                ctx.fillRect(ex + 1*es, ey + 9*es, 3*es, 2*es);
+                ctx.fillRect(ex + 17*es, ey + 9*es, 3*es, 2*es);
+            });
+
+            // Vẽ Boss ngầu và đẹp mắt
+            if (currentStage === 3 && boss) {
+                let bx = boss.x, by = boss.y;
+                ctx.save();
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = "#00f0ff";
+
+                ctx.fillStyle = "#3a0ca3";
+                ctx.fillRect(bx - 12, by + 18, 16, 25);
+                ctx.fillRect(bx + boss.width - 4, by + 18, 16, 25);
+
+                ctx.fillStyle = "#4361ee";
+                ctx.fillRect(bx + 10, by + 8, boss.width - 20, 36);
+                ctx.fillStyle = "#7209b7";
+                ctx.fillRect(bx + 18, by + 12, boss.width - 36, 28);
+
+                let coreColor = Math.floor(boss.anim * 10) % 2 === 0 ? "#ff007f" : "#4cc9f0";
+                ctx.fillStyle = coreColor;
+                ctx.shadowColor = coreColor;
+                ctx.fillRect(bx + boss.width/2 - 12, by + 18, 24, 16);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(bx + boss.width/2 - 4, by + 22, 8, 8);
+
+                ctx.fillStyle = "#f77f00";
+                ctx.fillRect(bx + 6, by + 35, 8, 18);
+                ctx.fillRect(bx + boss.width - 14, by + 35, 8, 18);
+
+                ctx.restore();
+
+                ctx.fillStyle = "#222";
+                ctx.fillRect(bx, by - 14, boss.width, 6);
+                ctx.fillStyle = "#ff3366";
+                ctx.fillRect(bx, by - 14, boss.width * (boss.hp / boss.maxHp), 6);
+            }
+        } 
+        else if (gameState === 'menu') {
+            ctx.fillStyle = "rgba(2, 4, 8, 0.88)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Tiêu đề hiệu ứng phát sáng chuyển động neon
+            ctx.save();
+            ctx.fillStyle = "#00f0ff";
+            ctx.font = "bold 22px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#00f0ff";
+            ctx.fillText("GALAXY PIXEL STRIKE", canvas.width / 2, 180);
+            ctx.restore();
+
+            ctx.fillStyle = "#8892b0";
+            ctx.font = "12px 'Plus Jakarta Sans'";
+            ctx.fillText("Dùng A-D hoặc Mũi tên để di chuyển • Phím Cách bắn đạn", canvas.width / 2, 220);
+
+            ctx.fillStyle = "#00f0ff";
+            ctx.fillRect(100, 280, 200, 50);
+            ctx.fillStyle = "#020408";
+            ctx.font = "bold 18px 'Plus Jakarta Sans'";
+            ctx.fillText("CHƠI NGAY", canvas.width / 2, 312);
+        }
+        else if (gameState === 'difficulty') {
+            ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#00f0ff";
+            ctx.font = "bold 22px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.fillText("CHỌN ĐỘ KHÓ", canvas.width / 2, 140);
+            
+            ctx.fillStyle = "#8892b0";
+            ctx.font = "13px 'Plus Jakarta Sans'";
+            ctx.fillText("SELECT DIFFICULTY", canvas.width / 2, 168);
+
+            ctx.fillStyle = "#06d6a0";
+            ctx.fillRect(100, 220, 200, 45);
+            ctx.fillStyle = "#020408";
+            ctx.font = "bold 16px 'Plus Jakarta Sans'";
+            ctx.fillText("DỄ", canvas.width / 2, 248);
+
+            ctx.fillStyle = "#ffb703";
+            ctx.fillRect(100, 285, 200, 45);
+            ctx.fillStyle = "#020408";
+            ctx.fillText("BÌNH THƯỜNG", canvas.width / 2, 313);
+
+            ctx.fillStyle = "#ff3366";
+            ctx.fillRect(100, 350, 200, 45);
+            ctx.fillStyle = "#fff";
+            ctx.fillText("KHÓ", canvas.width / 2, 378);
+        }
+        else if (gameState === 'gameover' || gameState === 'victory') {
+            ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = gameState === 'victory' ? "#06d6a0" : "#ff3366";
+            ctx.font = "bold 24px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.fillText(gameState === 'victory' ? "CHIẾN THẮNG" : "TRÒ CHƠI KẾT THÚ", canvas.width / 2, 180);
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = "#fff";
+            ctx.font = "16px 'Plus Jakarta Sans'";
+            ctx.fillText("Tổng điểm: " + score, canvas.width / 2, 230);
+
+            ctx.fillStyle = "#00f0ff";
+            ctx.fillRect(100, 310, 200, 50);
+            ctx.fillStyle = "#020408";
+            ctx.font = "bold 16px 'Plus Jakarta Sans'";
+            ctx.fillText("CHƠI LẠI", canvas.width / 2, 342);
+        }
+    }
+
+    function endGame() {
+        gameState = 'gameover';
+    }
+
+    window.addEventListener("keydown", (e) => {
+        if (gameState !== 'playing') return;
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
+        if (e.key === " " || e.key === "ArrowUp") {
+            let limitCooldown = player.powerFast ? 8 : 15;
+            if (shootCooldown <= 0) {
+                if (player.powerDouble) {
+                    bullets.push({ x: player.x + 12, y: player.y });
+                    bullets.push({ x: player.x + player.width - 12, y: player.y });
+                } else {
+                    bullets.push({ x: player.x + player.width / 2, y: player.y });
+                }
+                shootCooldown = limitCooldown;
+            }
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && player.dx < 0) player.dx = 0;
+        if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
+    });
+
+    canvas.addEventListener("click", () => { canvas.focus(); });
+</script>
+
+</body>
+</html>
