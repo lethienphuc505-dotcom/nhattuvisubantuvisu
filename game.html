@@ -182,7 +182,7 @@
         const mouseY = e.clientY - rect.top;
 
         if (gameState === 'menu') {
-            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 290 && mouseY <= 345) {
+            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 270 && mouseY <= 325) {
                 gameState = 'difficulty';
             }
         } else if (gameState === 'difficulty') {
@@ -596,7 +596,7 @@
             }
         } 
         else if (gameState === 'menu') {
-            // --- GIAO DIỆN MENU PHONG CÁCH CYBERPUNK / TƯƠNG LAI ---
+            // --- GIAO DIỆN MENU CYBERPUNK TỐI GIẢN & NGẦU ---
             ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -628,13 +628,8 @@
             ctx.font = "800 12px 'Plus Jakarta Sans'";
             ctx.shadowColor = "#ff007f";
             ctx.shadowBlur = 15;
-            ctx.fillText("VANG BONG KHONG GIAN TRUNG VU", canvas.width / 2, 200);
+            ctx.fillText("VANG BONG KHONG GIAN TRUNG VU", canvas.width / 2, 205);
             ctx.restore();
-
-            ctx.fillStyle = "#8892b0";
-            ctx.font = "11px 'Plus Jakarta Sans'";
-            ctx.textAlign = "center";
-            ctx.fillText("Ho tro May tinh & Dien thoai thong minh", canvas.width / 2, 240);
 
             // Nút CHƠI NGAY dạng Hologram Neon
             let btnPulse = Math.sin(menuAnim * 3) * 4;
@@ -644,12 +639,12 @@
             ctx.fillStyle = "rgba(0, 240, 255, 0.15)";
             ctx.strokeStyle = "#00f0ff";
             ctx.lineWidth = 2;
-            ctx.fillRect(90, 290, 220, 55);
-            ctx.strokeRect(90, 290, 220, 55);
+            ctx.fillRect(90, 275, 220, 55);
+            ctx.strokeRect(90, 275, 220, 55);
 
             ctx.fillStyle = "#ffffff";
             ctx.font = "800 18px 'Plus Jakarta Sans'";
-            ctx.fillText("CHƠI NGAY", canvas.width / 2, 325);
+            ctx.fillText("CHƠI NGAY", canvas.width / 2, 310);
             ctx.restore();
 
             // Viền góc kỹ thuật số trang trí
