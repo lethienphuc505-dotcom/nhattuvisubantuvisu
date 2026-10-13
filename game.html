@@ -81,7 +81,7 @@
             }
         } else if (currentStage === 2) {
             stageIndicator.textContent = "GIAI ĐOẠN 2";
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 8; i++) {
                 enemies.push(createFreeAlien());
             }
         } else if (currentStage === 3) {
@@ -90,7 +90,7 @@
                 x: 150, y: 50, width: 100, height: 70,
                 hp: 45, maxHp: 45, dx: 1.8, anim: 0
             };
-            // Tạo sẵn vài con nhỏ mở màn Boss stage
+            // Tạo sẵn 2 con nhỏ phụ đánh cùng Boss
             for (let i = 0; i < 2; i++) {
                 enemies.push(createFreeAlien());
             }
@@ -168,7 +168,6 @@
     }, 1000 / 60);
 
     function update() {
-        // Cập nhật hiệu ứng chuyển động sao nền ngay cả khi ở Menu
         stars.forEach(star => {
             star.y += star.speed;
             if (star.y > canvas.height) star.y = 0;
@@ -219,7 +218,7 @@
             }
         }
 
-        // Tần suất bắn đạn của alien phụ thuộc vào độ khó
+        // Tần suất bắn đạn của alien
         let shootMultiplier = (difficulty === 'easy') ? 0.4 : (difficulty === 'normal' ? 1.0 : 1.8);
         let alienShootChance = 0.008 * shootMultiplier;
         if (Math.random() < alienShootChance) {
@@ -245,7 +244,7 @@
             }
         }
 
-        // Xử lý Giai đoạn 1 & 2
+        // Xử lý Giai đoạn 1 & 2 (Kiểm tra khi tiêu diệt hết quái thì tự động chuyển màn)
         if (currentStage === 1 || currentStage === 2) {
             let aliveCount = 0;
             enemies.forEach(e => {
@@ -268,11 +267,9 @@
                 }
             });
 
-            if (score >= 200 && currentStage === 1) {
-                currentStage = 2;
-                initStage();
-            } else if (score >= 600 && currentStage === 2) {
-                currentStage = 3;
+            // Nếu tiêu diệt hết sạch quái trong màn -> chuyển sang giai đoạn tiếp theo
+            if (aliveCount === 0) {
+                currentStage++;
                 initStage();
             }
         } 
@@ -286,7 +283,6 @@
                 }
             }
 
-            // Cập nhật quái nhỏ phụ trong màn Boss
             enemies.forEach(e => {
                 if (!e.alive) return;
                 e.x += e.vx;
@@ -364,7 +360,6 @@
         ctx.fillStyle = "#020408";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Hiệu ứng sao bay nền động mượt mà
         stars.forEach(star => {
             ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
             ctx.fillRect(star.x, star.y, star.size, star.size);
@@ -391,7 +386,7 @@
             bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 12); });
             ctx.restore();
 
-            // Vẽ vật phẩm đúng chuẩn tên gọi
+            // Vật phẩm rơi
             powerUps.forEach(p => {
                 ctx.save();
                 let px = p.x, py = p.y;
@@ -507,7 +502,7 @@
             ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
             ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
 
-            // Vẽ quái nhỏ (bao gồm cả quái tiếp viện trong màn Boss)
+            // Vẽ quái nhỏ
             enemies.forEach(e => {
                 if (!e.alive) return;
                 let ex = e.x, ey = e.y, es = 1.6;
@@ -541,7 +536,7 @@
                 ctx.fillRect(ex + 17*es, ey + 9*es, 3*es, 2*es);
             });
 
-            // Vẽ Boss ngầu và đẹp mắt
+            // Vẽ Boss
             if (currentStage === 3 && boss) {
                 let bx = boss.x, by = boss.y;
                 ctx.save();
@@ -580,7 +575,6 @@
             ctx.fillStyle = "rgba(2, 4, 8, 0.88)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Tiêu đề hiệu ứng phát sáng chuyển động neon
             ctx.save();
             ctx.fillStyle = "#00f0ff";
             ctx.font = "bold 22px 'Plus Jakarta Sans'";
