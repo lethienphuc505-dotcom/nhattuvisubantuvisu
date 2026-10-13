@@ -2,21 +2,21 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Galaxy Pixel Shooter Deluxe</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body {
             margin: 0; padding: 0;
             background-color: #020408; color: #fff;
             font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; overflow: hidden;
+            height: 100vh; overflow: hidden; touch-action: none;
         }
         .container {
             position: relative;
-            width: 400px; height: 520px;
+            width: 400px; height: 560px;
             border: 2px solid #00f0ff; border-radius: 20px;
             background: radial-gradient(circle at center, #0a1128 0%, #020408 100%);
             box-shadow: 0 0 35px rgba(0,240,255,0.3);
@@ -30,18 +30,49 @@
             text-shadow: 0 2px 6px rgba(0,0,0,0.9);
         }
         canvas { outline: none; cursor: pointer; }
+
+        /* Bảng điều khiển cảm ứng ảo cho điện thoại */
+        .touch-controls {
+            position: absolute; bottom: 10px; left: 16px; right: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 10; pointer-events: none; opacity: 0.85;
+        }
+        .touch-group { display: flex; gap: 10px; pointer-events: auto; }
+        .touch-btn {
+            width: 60px; height: 50px; background: rgba(0, 240, 255, 0.2);
+            border: 2px solid #00f0ff; border-radius: 12px; color: #fff;
+            font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 0 10px rgba(0,240,255,0.3);
+        }
+        .touch-btn:active { background: rgba(0, 240, 255, 0.5); transform: scale(0.95); }
+        .fire-btn {
+            width: 70px; height: 50px; background: rgba(255, 51, 102, 0.2);
+            border: 2px solid #ff3366; border-radius: 12px; color: #ff3366;
+            font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; pointer-events: auto; box-shadow: 0 0 10px rgba(255,51,102,0.3);
+        }
+        .fire-btn:active { background: rgba(255, 51, 102, 0.5); transform: scale(0.95); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="hud">
+    <div class="hud" id="hudArea" style="display: none;">
         <div>Điểm: <span id="score" style="color: #00f0ff;">0</span></div>
         <div id="stageIndicator" style="color: #ffb703;">GIAI ĐOẠN 1</div>
         <div>Mạng: <span id="lives" style="color: #ff3366;">♥♥♥</span></div>
     </div>
 
     <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
+
+    <!-- Nút điều khiển cảm ứng dành cho điện thoại -->
+    <div class="touch-controls" id="touchControls" style="display: none;">
+        <div class="touch-group">
+            <div class="touch-btn" id="leftBtn">◄</div>
+            <div class="touch-btn" id="rightBtn">►</div>
+        </div>
+        <div class="fire-btn" id="fireBtn">BẮN</div>
+    </div>
 </div>
 
 <script>
@@ -50,6 +81,8 @@
     const scoreElement = document.getElementById("score");
     const livesElement = document.getElementById("lives");
     const stageIndicator = document.getElementById("stageIndicator");
+    const hudArea = document.getElementById("hudArea");
+    const touchControls = document.getElementById("touchControls");
 
     let gameState = 'menu';
     let score = 0, lives = 3, difficulty = 'normal', currentStage = 1;
@@ -90,7 +123,6 @@
                 x: 150, y: 50, width: 100, height: 70,
                 hp: 45, maxHp: 45, dx: 1.8, anim: 0
             };
-            // Tạo sẵn 2 con nhỏ phụ đánh cùng Boss
             for (let i = 0; i < 2; i++) {
                 enemies.push(createFreeAlien());
             }
@@ -121,6 +153,8 @@
         scoreElement.textContent = score; 
         updateLivesDisplay(); 
         initStage();
+        hudArea.style.display = "flex";
+        touchControls.style.display = "flex";
         canvas.focus();
     }
 
@@ -144,6 +178,7 @@
         }
     }
 
+    // Xử lý sự kiện click / chạm màn hình menu
     canvas.addEventListener("click", (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -158,7 +193,11 @@
             else if (mouseX >= 100 && mouseX <= 300 && mouseY >= 285 && mouseY <= 330) startGame('normal');
             else if (mouseX >= 100 && mouseX <= 300 && mouseY >= 350 && mouseY <= 395) startGame('hard');
         } else if (gameState === 'gameover' || gameState === 'victory') {
-            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 310 && mouseY <= 360) gameState = 'menu';
+            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 310 && mouseY <= 360) {
+                gameState = 'menu';
+                hudArea.style.display = "none";
+                touchControls.style.display = "none";
+            }
         }
     });
 
@@ -189,13 +228,11 @@
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-        // Đạn người chơi
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].y -= 11;
             if (bullets[i].y < 0) bullets.splice(i, 1);
         }
 
-        // Cập nhật vật phẩm rơi
         for (let i = powerUps.length - 1; i >= 0; i--) {
             powerUps[i].y += 2;
             if (powerUps[i].x > player.x && powerUps[i].x < player.x + player.width &&
@@ -218,7 +255,6 @@
             }
         }
 
-        // Tần suất bắn đạn của alien
         let shootMultiplier = (difficulty === 'easy') ? 0.4 : (difficulty === 'normal' ? 1.0 : 1.8);
         let alienShootChance = 0.008 * shootMultiplier;
         if (Math.random() < alienShootChance) {
@@ -244,7 +280,6 @@
             }
         }
 
-        // Xử lý Giai đoạn 1 & 2 (Kiểm tra khi tiêu diệt hết quái thì tự động chuyển màn)
         if (currentStage === 1 || currentStage === 2) {
             let aliveCount = 0;
             enemies.forEach(e => {
@@ -267,16 +302,14 @@
                 }
             });
 
-            // Nếu tiêu diệt hết sạch quái trong màn -> chuyển sang giai đoạn tiếp theo
             if (aliveCount === 0) {
                 currentStage++;
                 initStage();
             }
         } 
-        // Xử lý Boss Stage (Cứ mỗi 5 giây sinh ra 3 tàu alien nhỏ tiếp viện)
         else if (currentStage === 3 && boss) {
             spawnTimer++;
-            if (spawnTimer >= 300) { // 300 frames = 5 giây
+            if (spawnTimer >= 300) {
                 spawnTimer = 0;
                 for (let k = 0; k < 3; k++) {
                     enemies.push(createFreeAlien());
@@ -311,7 +344,6 @@
             }
         }
 
-        // Va chạm đạn người chơi với quái và boss
         for (let i = bullets.length - 1; i >= 0; i--) {
             let bulletHit = false;
             
@@ -378,7 +410,6 @@
         });
 
         if (gameState === 'playing') {
-            // Đạn người chơi
             ctx.save();
             ctx.shadowBlur = 12;
             ctx.shadowColor = "#00f0ff";
@@ -386,7 +417,6 @@
             bullets.forEach(b => { ctx.fillRect(b.x - 2, b.y, 4, 12); });
             ctx.restore();
 
-            // Vật phẩm rơi
             powerUps.forEach(p => {
                 ctx.save();
                 let px = p.x, py = p.y;
@@ -425,7 +455,6 @@
                 ctx.restore();
             });
 
-            // Đạn địch
             ctx.save();
             ctx.shadowBlur = 8;
             ctx.shadowColor = "#ff3366";
@@ -433,7 +462,6 @@
             enemyBullets.forEach(eb => { ctx.fillRect(eb.x - 2, eb.y, 4, 10); });
             ctx.restore();
 
-            // Tàu Player
             let px = player.x, py = player.y, s = 1.5;
             ctx.save();
             ctx.shadowBlur = 18;
@@ -502,7 +530,6 @@
             ctx.fillRect(px + 11*s, py + 19*s, 1*s, 5*s);
             ctx.fillRect(px + 20*s, py + 19*s, 1*s, 5*s);
 
-            // Vẽ quái nhỏ
             enemies.forEach(e => {
                 if (!e.alive) return;
                 let ex = e.x, ey = e.y, es = 1.6;
@@ -536,7 +563,6 @@
                 ctx.fillRect(ex + 17*es, ey + 9*es, 3*es, 2*es);
             });
 
-            // Vẽ Boss
             if (currentStage === 3 && boss) {
                 let bx = boss.x, by = boss.y;
                 ctx.save();
@@ -572,7 +598,7 @@
             }
         } 
         else if (gameState === 'menu') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.88)";
+            ctx.fillStyle = "rgba(2, 4, 8, 0.85)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.save();
@@ -586,7 +612,8 @@
 
             ctx.fillStyle = "#8892b0";
             ctx.font = "12px 'Plus Jakarta Sans'";
-            ctx.fillText("Dùng A-D hoặc Mũi tên để di chuyển • Phím Cách bắn đạn", canvas.width / 2, 220);
+            ctx.textAlign = "center";
+            ctx.fillText("Chơi trên Máy tính hoặc Điện thoại", canvas.width / 2, 220);
 
             ctx.fillStyle = "#00f0ff";
             ctx.fillRect(100, 280, 200, 50);
@@ -649,23 +676,32 @@
 
     function endGame() {
         gameState = 'gameover';
+        hudArea.style.display = "none";
+        touchControls.style.display = "none";
     }
 
+    // Xử lý bắn đạn chung
+    function triggerShoot() {
+        if (gameState !== 'playing') return;
+        let limitCooldown = player.powerFast ? 8 : 15;
+        if (shootCooldown <= 0) {
+            if (player.powerDouble) {
+                bullets.push({ x: player.x + 12, y: player.y });
+                bullets.push({ x: player.x + player.width - 12, y: player.y });
+            } else {
+                bullets.push({ x: player.x + player.width / 2, y: player.y });
+            }
+            shootCooldown = limitCooldown;
+        }
+    }
+
+    // Điều khiển bàn phím máy tính
     window.addEventListener("keydown", (e) => {
         if (gameState !== 'playing') return;
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
         if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
         if (e.key === " " || e.key === "ArrowUp") {
-            let limitCooldown = player.powerFast ? 8 : 15;
-            if (shootCooldown <= 0) {
-                if (player.powerDouble) {
-                    bullets.push({ x: player.x + 12, y: player.y });
-                    bullets.push({ x: player.x + player.width - 12, y: player.y });
-                } else {
-                    bullets.push({ x: player.x + player.width / 2, y: player.y });
-                }
-                shootCooldown = limitCooldown;
-            }
+            triggerShoot();
             e.preventDefault();
         }
     });
@@ -675,7 +711,23 @@
         if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
     });
 
-    canvas.addEventListener("click", () => { canvas.focus(); });
+    // Điều khiển cảm ứng trên điện thoại
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const fireBtn = document.getElementById("fireBtn");
+
+    leftBtn.addEventListener("touchstart", (e) => { player.dx = -player.speed; e.preventDefault(); });
+    leftBtn.addEventListener("touchend", () => { if (player.dx < 0) player.dx = 0; });
+    leftBtn.addEventListener("mousedown", () => { player.dx = -player.speed; });
+    leftBtn.addEventListener("mouseup", () => { if (player.dx < 0) player.dx = 0; });
+
+    rightBtn.addEventListener("touchstart", (e) => { player.dx = player.speed; e.preventDefault(); });
+    rightBtn.addEventListener("touchend", () => { if (player.dx > 0) player.dx = 0; });
+    rightBtn.addEventListener("mousedown", () => { player.dx = player.speed; });
+    rightBtn.addEventListener("mouseup", () => { if (player.dx > 0) player.dx = 0; });
+
+    fireBtn.addEventListener("touchstart", (e) => { triggerShoot(); e.preventDefault(); });
+    fireBtn.addEventListener("mousedown", () => { triggerShoot(); });
 </script>
 
 </body>
