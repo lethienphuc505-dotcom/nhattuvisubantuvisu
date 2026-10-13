@@ -31,7 +31,6 @@
         }
         canvas { outline: none; cursor: pointer; }
 
-        /* Bảng điều khiển cảm ứng ảo cho điện thoại */
         .touch-controls {
             position: absolute; bottom: 10px; left: 16px; right: 16px;
             display: flex; justify-content: space-between; align-items: center;
@@ -65,7 +64,6 @@
 
     <canvas id="gameCanvas" width="400" height="520" tabindex="1"></canvas>
 
-    <!-- Nút điều khiển cảm ứng dành cho điện thoại -->
     <div class="touch-controls" id="touchControls" style="display: none;">
         <div class="touch-group">
             <div class="touch-btn" id="leftBtn">◄</div>
@@ -178,7 +176,6 @@
         }
     }
 
-    // Xử lý sự kiện click / chạm màn hình menu
     canvas.addEventListener("click", (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -356,7 +353,8 @@
                     scoreElement.textContent = score;
                     addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
 
-                    if (Math.random() < 0.35) {
+                    // Đã giảm tỷ lệ rơi vật phẩm xuống 12% (0.12) để có độ khan hiếm và thử thách hơn
+                    if (Math.random() < 0.12) {
                         let rand = Math.random();
                         let pType = rand < 0.33 ? 'hp' : (rand < 0.66 ? 'double' : 'fast');
                         powerUps.push({ x: e.x + e.width/2, y: e.y, type: pType });
@@ -680,7 +678,6 @@
         touchControls.style.display = "none";
     }
 
-    // Xử lý bắn đạn chung
     function triggerShoot() {
         if (gameState !== 'playing') return;
         let limitCooldown = player.powerFast ? 8 : 15;
@@ -695,7 +692,6 @@
         }
     }
 
-    // Điều khiển bàn phím máy tính
     window.addEventListener("keydown", (e) => {
         if (gameState !== 'playing') return;
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
@@ -711,7 +707,6 @@
         if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && player.dx > 0) player.dx = 0;
     });
 
-    // Điều khiển cảm ứng trên điện thoại
     const leftBtn = document.getElementById("leftBtn");
     const rightBtn = document.getElementById("rightBtn");
     const fireBtn = document.getElementById("fireBtn");
