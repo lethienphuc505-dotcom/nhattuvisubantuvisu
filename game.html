@@ -19,7 +19,7 @@
             width: 400px; height: 560px;
             border: 2px solid #00f0ff; border-radius: 20px;
             background: radial-gradient(circle at center, #0a1128 0%, #020408 100%);
-            box-shadow: 0 0 35px rgba(0,240,255,0.3);
+            box-shadow: 0 0 40px rgba(0,240,255,0.4), inset 0 0 20px rgba(0,240,255,0.15);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             overflow: hidden;
         }
@@ -89,7 +89,7 @@
         powerDouble: false, powerFast: false, powerTimer: 0 
     };
     let bullets = [], enemies = [], stars = [], particles = [], enemyBullets = [], powerUps = [], boss = null;
-    let shootCooldown = 0, spawnTimer = 0;
+    let shootCooldown = 0, spawnTimer = 0, menuAnim = 0;
 
     for(let i=0; i<80; i++) {
         stars.push({
@@ -182,7 +182,7 @@
         const mouseY = e.clientY - rect.top;
 
         if (gameState === 'menu') {
-            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 280 && mouseY <= 330) {
+            if (mouseX >= 100 && mouseX <= 300 && mouseY >= 290 && mouseY <= 345) {
                 gameState = 'difficulty';
             }
         } else if (gameState === 'difficulty') {
@@ -204,6 +204,7 @@
     }, 1000 / 60);
 
     function update() {
+        menuAnim += 0.05;
         stars.forEach(star => {
             star.y += star.speed;
             if (star.y > canvas.height) star.y = 0;
@@ -353,7 +354,6 @@
                     scoreElement.textContent = score;
                     addExplosion(e.x + e.width/2, e.y + e.height/2, "#ff007f");
 
-                    // Đã giảm tỷ lệ rơi vật phẩm xuống 12% (0.12) để có độ khan hiếm và thử thách hơn
                     if (Math.random() < 0.12) {
                         let rand = Math.random();
                         let pType = rand < 0.33 ? 'hp' : (rand < 0.66 ? 'double' : 'fast');
@@ -596,60 +596,115 @@
             }
         } 
         else if (gameState === 'menu') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.85)";
+            // --- GIAO DIỆN MENU PHONG CÁCH CYBERPUNK / TƯƠNG LAI ---
+            ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Khung lưới trang trí phong cách Sci-Fi
+            ctx.strokeStyle = "rgba(0, 240, 255, 0.15)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+            for (let j = 0; j < canvas.height; j += 40) {
+                ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+            }
+
+            // Thanh trang trí kỹ thuật số phía trên
+            ctx.fillStyle = "#00f0ff";
+            ctx.fillRect(80, 110, 240, 2);
+            ctx.fillRect(150, 105, 100, 2);
+
+            // Tiêu đề game Cyberpunk rực rỡ
+            ctx.save();
+            ctx.fillStyle = "#00f0ff";
+            ctx.font = "800 24px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = "#00f0ff";
+            ctx.fillText("GALAXY PIXEL STRIKE", canvas.width / 2, 175);
+            
+            ctx.fillStyle = "#ff007f";
+            ctx.font = "800 12px 'Plus Jakarta Sans'";
+            ctx.shadowColor = "#ff007f";
+            ctx.shadowBlur = 15;
+            ctx.fillText("VANG BONG KHONG GIAN TRUNG VU", canvas.width / 2, 200);
+            ctx.restore();
+
+            ctx.fillStyle = "#8892b0";
+            ctx.font = "11px 'Plus Jakarta Sans'";
+            ctx.textAlign = "center";
+            ctx.fillText("Ho tro May tinh & Dien thoai thong minh", canvas.width / 2, 240);
+
+            // Nút CHƠI NGAY dạng Hologram Neon
+            let btnPulse = Math.sin(menuAnim * 3) * 4;
+            ctx.save();
+            ctx.shadowBlur = 20 + btnPulse;
+            ctx.shadowColor = "#00f0ff";
+            ctx.fillStyle = "rgba(0, 240, 255, 0.15)";
+            ctx.strokeStyle = "#00f0ff";
+            ctx.lineWidth = 2;
+            ctx.fillRect(90, 290, 220, 55);
+            ctx.strokeRect(90, 290, 220, 55);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "800 18px 'Plus Jakarta Sans'";
+            ctx.fillText("CHƠI NGAY", canvas.width / 2, 325);
+            ctx.restore();
+
+            // Viền góc kỹ thuật số trang trí
+            ctx.fillStyle = "#ff3366";
+            ctx.fillRect(35, 35, 15, 3); ctx.fillRect(35, 35, 3, 15);
+            ctx.fillRect(canvas.width - 50, 35, 15, 3); ctx.fillRect(canvas.width - 38, 35, 3, 15);
+            ctx.fillRect(35, canvas.height - 35, 15, 3); ctx.fillRect(35, canvas.height - 47, 3, 15);
+            ctx.fillRect(canvas.width - 50, canvas.height - 35, 15, 3); ctx.fillRect(canvas.width - 38, canvas.height - 47, 3, 15);
+        }
+        else if (gameState === 'difficulty') {
+            ctx.fillStyle = "rgba(2, 4, 8, 0.95)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.save();
             ctx.fillStyle = "#00f0ff";
             ctx.font = "bold 22px 'Plus Jakarta Sans'";
             ctx.textAlign = "center";
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 15;
             ctx.shadowColor = "#00f0ff";
-            ctx.fillText("GALAXY PIXEL STRIKE", canvas.width / 2, 180);
+            ctx.fillText("CHỌN ĐỘ KHÓ", canvas.width / 2, 140);
             ctx.restore();
-
+            
             ctx.fillStyle = "#8892b0";
             ctx.font = "12px 'Plus Jakarta Sans'";
             ctx.textAlign = "center";
-            ctx.fillText("Chơi trên Máy tính hoặc Điện thoại", canvas.width / 2, 220);
+            ctx.fillText("SELECT DIFFICULTY LEVEL", canvas.width / 2, 165);
 
-            ctx.fillStyle = "#00f0ff";
-            ctx.fillRect(100, 280, 200, 50);
-            ctx.fillStyle = "#020408";
-            ctx.font = "bold 18px 'Plus Jakarta Sans'";
-            ctx.fillText("CHƠI NGAY", canvas.width / 2, 312);
-        }
-        else if (gameState === 'difficulty') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = "#00f0ff";
-            ctx.font = "bold 22px 'Plus Jakarta Sans'";
-            ctx.textAlign = "center";
-            ctx.fillText("CHỌN ĐỘ KHÓ", canvas.width / 2, 140);
-            
-            ctx.fillStyle = "#8892b0";
-            ctx.font = "13px 'Plus Jakarta Sans'";
-            ctx.fillText("SELECT DIFFICULTY", canvas.width / 2, 168);
-
-            ctx.fillStyle = "#06d6a0";
+            // Nút DỄ
+            ctx.fillStyle = "rgba(6, 214, 160, 0.2)";
+            ctx.strokeStyle = "#06d6a0";
+            ctx.lineWidth = 2;
             ctx.fillRect(100, 220, 200, 45);
-            ctx.fillStyle = "#020408";
+            ctx.strokeRect(100, 220, 200, 45);
+            ctx.fillStyle = "#06d6a0";
             ctx.font = "bold 16px 'Plus Jakarta Sans'";
             ctx.fillText("DỄ", canvas.width / 2, 248);
 
-            ctx.fillStyle = "#ffb703";
+            // Nút BÌNH THƯỜNG
+            ctx.fillStyle = "rgba(255, 183, 3, 0.2)";
+            ctx.strokeStyle = "#ffb703";
             ctx.fillRect(100, 285, 200, 45);
-            ctx.fillStyle = "#020408";
+            ctx.strokeRect(100, 285, 200, 45);
+            ctx.fillStyle = "#ffb703";
             ctx.fillText("BÌNH THƯỜNG", canvas.width / 2, 313);
 
-            ctx.fillStyle = "#ff3366";
+            // Nút KHÓ
+            ctx.fillStyle = "rgba(255, 51, 102, 0.2)";
+            ctx.strokeStyle = "#ff3366";
             ctx.fillRect(100, 350, 200, 45);
-            ctx.fillStyle = "#fff";
+            ctx.strokeRect(100, 350, 200, 45);
+            ctx.fillStyle = "#ff3366";
             ctx.fillText("KHÓ", canvas.width / 2, 378);
         }
         else if (gameState === 'gameover' || gameState === 'victory') {
-            ctx.fillStyle = "rgba(2, 4, 8, 0.92)";
+            ctx.fillStyle = "rgba(2, 4, 8, 0.95)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             ctx.fillStyle = gameState === 'victory' ? "#06d6a0" : "#ff3366";
@@ -664,11 +719,18 @@
             ctx.font = "16px 'Plus Jakarta Sans'";
             ctx.fillText("Tổng điểm: " + score, canvas.width / 2, 230);
 
-            ctx.fillStyle = "#00f0ff";
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#00f0ff";
+            ctx.fillStyle = "rgba(0, 240, 255, 0.2)";
+            ctx.strokeStyle = "#00f0ff";
+            ctx.lineWidth = 2;
             ctx.fillRect(100, 310, 200, 50);
-            ctx.fillStyle = "#020408";
+            ctx.strokeRect(100, 310, 200, 50);
+            ctx.fillStyle = "#00f0ff";
             ctx.font = "bold 16px 'Plus Jakarta Sans'";
             ctx.fillText("CHƠI LẠI", canvas.width / 2, 342);
+            ctx.restore();
         }
     }
 
