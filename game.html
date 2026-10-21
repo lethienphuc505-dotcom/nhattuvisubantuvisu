@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SNAKE.IO: CHIẾN TRƯỜNG MÃN XÀ</title>
+    <title>SNAKE.IO: BẢO HỘ BÁ CHỦ</title>
     <style>
         * {
             margin: 0;
@@ -162,11 +162,6 @@
             border: 2px solid rgba(255,255,255,0.4);
         }
 
-        #boost-btn:active {
-            transform: scale(0.95);
-            background: linear-gradient(135deg, #ff5500, #ff0055);
-        }
-
         /* Start/Game Over Screens */
         .modal-screen {
             position: absolute;
@@ -273,7 +268,6 @@
             display: none !important;
         }
 
-        /* Instructions */
         .controls-hint {
             margin-top: 15px;
             font-size: 12px;
@@ -313,13 +307,13 @@
         <div class="modal-card">
             <h1>SNAKE.IO 3D</h1>
             <div class="input-group">
-                <input type="text" id="player-name" placeholder="Nhập tên Rắn của bạn..." maxlength="12" value="Mãng Xà">
+                <input type="text" id="player-name" placeholder="Nhập tên Rắn của bạn..." maxlength="12" value="Bá Chế">
             </div>
 
             <p style="font-size:13px; color:#aaa; margin-bottom:10px;">Chọn Trang Phục:</p>
             <div class="skin-selector">
                 <div class="skin-option active" data-skin="neon" style="background: linear-gradient(45deg, #00f0ff, #0055ff);"></div>
-                <div class="skin-option" data-skin="fire" style="background: linear-gradient(45deg, #ff0055, #ffaa00);"></div>
+                <div class="skin-option" data-skin="fire" style="background: linear-gradient(45deg, #ff0055, #ff5500);"></div>
                 <div class="skin-option" data-skin="toxic" style="background: linear-gradient(45deg, #00ff66, #adff2f);"></div>
                 <div class="skin-option" data-skin="royal" style="background: linear-gradient(45deg, #ff00ff, #7000ff);"></div>
                 <div class="skin-option" data-skin="gold" style="background: linear-gradient(45deg, #ffe600, #ff8800);"></div>
@@ -328,9 +322,8 @@
             <button class="btn-play" id="start-btn">BẮT ĐẦU CHIẾN</button>
 
             <div class="controls-hint">
-                🖱️ Di chuyển chuột để đổi hướng<br>
-                ⚡ Giữ chuột trái hoặc [SPACE] để Tăng Tốc<br>
-                💥 Tạt đầu đối thủ để tiêu diệt chúng!
+                ✨ Đã bật chế độ: Không tự đâm vào mình & Xuyên biên giới!<br>
+                🖱️ Di chuột để lái | Giữ [SPACE] hoặc Chuột trái để Tăng Tốc.
             </div>
         </div>
     </div>
@@ -342,17 +335,16 @@
             <p style="font-size: 16px; margin-bottom: 8px;">Chiều dài đạt được: <span id="final-length" style="color:#00f0ff; font-weight:bold;">0m</span></p>
             <p style="font-size: 16px; margin-bottom: 20px;">Hạ gục đối thủ: <span id="final-kills" style="color:#ff0055; font-weight:bold;">0</span></p>
 
-            <button class="btn-play" id="restart-btn">CHƠI LẠI NGAY</button>
+            <button class="btn-play" id="restart-btn">PHỤC THÙ NGAY</button>
         </div>
     </div>
 
     <script>
-        // --- GAME CONFIG & CONSTANTS ---
-        const WORLD_SIZE = 3600;
-        const INITIAL_SNAKE_LENGTH = 18;
-        const BASE_SPEED = 3.6;
-        const BOOST_SPEED = 7.2;
-        const FOOD_COUNT = 700;
+        const WORLD_SIZE = 4000;
+        const INITIAL_SNAKE_LENGTH = 20;
+        const BASE_SPEED = 3.8;
+        const BOOST_SPEED = 7.5;
+        const FOOD_COUNT = 800;
         const AI_SNAKE_COUNT = 16;
 
         const SKINS = {
@@ -369,7 +361,6 @@
             "Gia Tộc Rắn", "Bá Chủ", "Thần Rắn", "Xạ Thủ", "Mamba"
         ];
 
-        // Canvas setup
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
         const minimapCanvas = document.getElementById('minimap');
@@ -385,7 +376,6 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Audio Effects (Web Audio API)
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -405,23 +395,21 @@
             } catch(e) {}
         }
 
-        // --- GAME STATE VARIABLES ---
         let isGameRunning = false;
         let player = null;
         let snakes = [];
         let foods = [];
         let particles = [];
-        let camera = { x: 0, y: 0, zoom: 1 };
+        let camera = { x: 0, y: 0 };
         let mousePos = { x: width / 2, y: height / 2 };
         let isBoosting = false;
         let selectedSkin = 'neon';
 
-        // --- FOOD CLASS ---
         class Food {
             constructor(x, y, radius, isSuper = false, color = null) {
                 this.x = x || Math.random() * (WORLD_SIZE - 200) + 100;
                 this.y = y || Math.random() * (WORLD_SIZE - 200) + 100;
-                this.radius = radius || (Math.random() * 2 + 3);
+                this.radius = radius || (Math.random() * 2 + 3.5);
                 this.isSuper = isSuper;
                 this.color = color || `hsl(${Math.random() * 360}, 100%, 60%)`;
                 this.pulse = Math.random() * Math.PI;
@@ -430,7 +418,6 @@
             draw(ctx) {
                 this.pulse += 0.05;
                 const displayRadius = this.radius + (this.isSuper ? Math.sin(this.pulse) * 1.5 : 0);
-
                 ctx.save();
                 ctx.shadowBlur = this.isSuper ? 12 : 5;
                 ctx.shadowColor = this.color;
@@ -442,7 +429,6 @@
             }
         }
 
-        // --- PARTICLE CLASS ---
         class Particle {
             constructor(x, y, color) {
                 this.x = x;
@@ -471,26 +457,22 @@
             }
         }
 
-        // --- SNAKE CLASS ---
         class Snake {
             constructor(x, y, name, skinKey, isAI = false) {
                 this.name = name;
                 this.isAI = isAI;
                 this.skin = SKINS[skinKey] || SKINS.neon;
-                this.skinKey = skinKey;
-                
                 this.x = x;
                 this.y = y;
                 this.angle = Math.random() * Math.PI * 2;
                 this.targetAngle = this.angle;
                 this.speed = BASE_SPEED;
                 this.isBoosting = false;
-
                 this.score = 0;
                 this.kills = 0;
                 this.isDead = false;
+                this.immunityTimer = 180; // 3 giây bất tử khi mới sinh
 
-                // Body segments
                 this.body = [];
                 this.targetLength = INITIAL_SNAKE_LENGTH;
                 this.segmentDistance = 6;
@@ -499,71 +481,60 @@
                     this.body.push({ x: this.x - i * this.segmentDistance * Math.cos(this.angle), y: this.y - i * this.segmentDistance * Math.sin(this.angle) });
                 }
 
-                // AI properties
                 this.aiTimer = 0;
-                this.aiTargetPos = null;
             }
 
             get radius() {
-                return 12 + Math.sqrt(this.body.length) * 0.6;
+                return 12 + Math.sqrt(this.body.length) * 0.5;
             }
 
             update() {
                 if (this.isDead) return;
 
-                // Handle AI Steering
+                if (this.immunityTimer > 0) this.immunityTimer--;
+
                 if (this.isAI) {
                     this.updateAI();
                 } else {
-                    // Player Steering based on Mouse
                     const screenCenterX = width / 2;
                     const screenCenterY = height / 2;
                     const dx = mousePos.x - screenCenterX;
                     const dy = mousePos.y - screenCenterY;
-                    if (Math.hypot(dx, dy) > 20) {
+                    if (Math.hypot(dx, dy) > 15) {
                         this.targetAngle = Math.atan2(dy, dx);
                     }
-                    this.isBoosting = isBoosting && this.body.length > 12;
+                    this.isBoosting = isBoosting && this.body.length > 15;
                 }
 
-                // Smooth rotation
                 let diff = this.targetAngle - this.angle;
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
                 this.angle += diff * 0.12;
 
-                // Speed calculation
                 this.speed = this.isBoosting ? BOOST_SPEED : BASE_SPEED;
 
-                // Boost cost
                 if (this.isBoosting && Math.random() < 0.3) {
-                    if (this.body.length > 10) {
+                    if (this.body.length > 12) {
                         const tail = this.body[this.body.length - 1];
                         foods.push(new Food(tail.x, tail.y, 3, false, this.skin.head));
-                        if (Math.random() < 0.2) this.body.pop();
+                        if (Math.random() < 0.25) this.body.pop();
                     }
                 }
 
-                // Move Head
                 this.x += Math.cos(this.angle) * this.speed;
                 this.y += Math.sin(this.angle) * this.speed;
 
-                // World boundaries collision
-                const r = this.radius;
-                if (this.x < r || this.x > WORLD_SIZE - r || this.y < r || this.y > WORLD_SIZE - r) {
-                    this.die();
-                    return;
-                }
+                // Xuyên biên giới bản đồ (Portal Loop)
+                if (this.x < 0) this.x = WORLD_SIZE;
+                if (this.x > WORLD_SIZE) this.x = 0;
+                if (this.y < 0) this.y = WORLD_SIZE;
+                if (this.y > WORLD_SIZE) this.y = 0;
 
-                // Update Body Segments
                 this.body.unshift({ x: this.x, y: this.y });
-
-                // Adjust body length
                 while (this.body.length > this.targetLength) {
                     this.body.pop();
                 }
 
-                // Eat Foods
                 this.checkFoodCollision();
             }
 
@@ -571,10 +542,8 @@
                 this.aiTimer--;
                 if (this.aiTimer <= 0) {
                     this.aiTimer = Math.floor(Math.random() * 40 + 20);
-
-                    // Find nearest food or avoid other snakes
                     let nearestFood = null;
-                    let minDist = 300;
+                    let minDist = 350;
 
                     for (let f of foods) {
                         let d = Math.hypot(f.x - this.x, f.y - this.y);
@@ -589,16 +558,7 @@
                     } else {
                         this.targetAngle += (Math.random() - 0.5) * 1.5;
                     }
-
-                    // Avoid Boundaries
-                    const margin = 200;
-                    if (this.x < margin) this.targetAngle = 0;
-                    if (this.x > WORLD_SIZE - margin) this.targetAngle = Math.PI;
-                    if (this.y < margin) this.targetAngle = Math.PI / 2;
-                    if (this.y > WORLD_SIZE - margin) this.targetAngle = -Math.PI / 2;
-
-                    // AI Boost randomly
-                    this.isBoosting = Math.random() < 0.15 && this.body.length > 25;
+                    this.isBoosting = Math.random() < 0.12 && this.body.length > 30;
                 }
             }
 
@@ -611,9 +571,8 @@
                         this.targetLength += f.isSuper ? 3 : 1;
                         this.score += f.isSuper ? 25 : 8;
                         foods.splice(i, 1);
-                        if (!this.isAI) playSound(400 + Math.random() * 200, 'sine', 0.05);
-                        
-                        // Spawn new food if food count drops
+                        if (!this.isAI) playSound(450 + Math.random() * 150, 'sine', 0.05);
+
                         if (foods.length < FOOD_COUNT) {
                             foods.push(new Food());
                         }
@@ -622,19 +581,12 @@
             }
 
             die() {
-                if (this.isDead) return;
+                if (this.isDead || this.immunityTimer > 0) return;
                 this.isDead = true;
 
-                // Spawn food along the dead snake's body
                 for (let i = 0; i < this.body.length; i += 2) {
                     const p = this.body[i];
-                    foods.push(new Food(
-                        p.x + (Math.random() - 0.5) * 10,
-                        p.y + (Math.random() - 0.5) * 10,
-                        Math.random() * 3 + 5,
-                        true,
-                        this.skin.body[i % this.skin.body.length]
-                    ));
+                    foods.push(new Food(p.x, p.y, Math.random() * 3 + 5, true, this.skin.body[i % this.skin.body.length]));
                     particles.push(new Particle(p.x, p.y, this.skin.head));
                 }
 
@@ -646,10 +598,8 @@
 
             draw(ctx) {
                 if (this.isDead || this.body.length < 2) return;
-
                 const radius = this.radius;
 
-                // Draw Body Segments (Back to Front)
                 for (let i = this.body.length - 1; i >= 0; i--) {
                     const p = this.body[i];
                     const colorIndex = Math.floor(i / 3) % this.skin.body.length;
@@ -658,8 +608,8 @@
                     ctx.save();
                     ctx.fillStyle = this.skin.body[colorIndex];
                     if (i === 0) {
-                        ctx.shadowBlur = 15;
-                        ctx.shadowColor = this.skin.glow;
+                        ctx.shadowBlur = this.immunityTimer > 0 ? 25 : 15;
+                        ctx.shadowColor = this.immunityTimer > 0 ? '#ffffff' : this.skin.glow;
                     }
                     ctx.beginPath();
                     ctx.arc(p.x, p.y, segmentRadius, 0, Math.PI * 2);
@@ -667,20 +617,17 @@
                     ctx.restore();
                 }
 
-                // Draw Eyes on Head
                 const head = this.body[0];
                 ctx.save();
                 ctx.translate(head.x, head.y);
                 ctx.rotate(this.angle);
 
-                // Eyes
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
                 ctx.arc(radius * 0.4, -radius * 0.4, radius * 0.35, 0, Math.PI * 2);
                 ctx.arc(radius * 0.4, radius * 0.4, radius * 0.35, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Pupils
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
                 ctx.arc(radius * 0.5, -radius * 0.4, radius * 0.18, 0, Math.PI * 2);
@@ -689,7 +636,6 @@
 
                 ctx.restore();
 
-                // Draw Name Tag
                 ctx.save();
                 ctx.font = 'bold 12px Segoe UI';
                 ctx.fillStyle = '#ffffff';
@@ -701,7 +647,6 @@
             }
         }
 
-        // --- COLLISION SYSTEM ---
         function checkSnakeCollisions() {
             for (let s1 of snakes) {
                 if (s1.isDead) continue;
@@ -711,17 +656,19 @@
                 for (let s2 of snakes) {
                     if (s2.isDead) continue;
 
-                    // Check head-to-body collisions
-                    const startIndex = (s1 === s2) ? 8 : 0; // Don't collide with own neck
-                    for (let i = startIndex; i < s2.body.length; i++) {
+                    // BỎ QUA va chạm với chính mình (Không bao giờ tự đâm vào đuôi mình chết)
+                    if (s1 === s2) continue;
+
+                    // Kiểm tra đầu s1 đâm vào thân s2
+                    for (let i = 0; i < s2.body.length; i++) {
                         const p2 = s2.body[i];
                         const dist = Math.hypot(head1.x - p2.x, head1.y - p2.y);
 
-                        if (dist < r1 + s2.radius * 0.8) {
+                        if (dist < r1 + s2.radius * 0.75) {
                             s1.die();
                             if (s1 !== s2) {
                                 s2.kills++;
-                                s2.targetLength += 10;
+                                s2.targetLength += 8;
                             }
                             break;
                         }
@@ -730,7 +677,6 @@
             }
         }
 
-        // --- DRAW WORLD GRID ---
         function drawGrid(ctx) {
             const gridSize = 80;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
@@ -743,25 +689,21 @@
 
             ctx.beginPath();
             for (let x = startX; x <= endX; x += gridSize) {
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, WORLD_SIZE);
+                ctx.moveTo(x, 0); ctx.lineTo(x, WORLD_SIZE);
             }
             for (let y = startY; y <= endY; y += gridSize) {
-                ctx.moveTo(0, y);
-                ctx.lineTo(WORLD_SIZE, y);
+                ctx.moveTo(0, y); ctx.lineTo(WORLD_SIZE, y);
             }
             ctx.stroke();
 
-            // World Outer Boundary
-            ctx.strokeStyle = '#ff0055';
-            ctx.lineWidth = 8;
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ff0055';
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 6;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00f0ff';
             ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
             ctx.shadowBlur = 0;
         }
 
-        // --- MINIMAP RENDER ---
         function drawMinimap() {
             minimapCtx.clearRect(0, 0, 130, 130);
             const scale = 130 / WORLD_SIZE;
@@ -775,15 +717,11 @@
             }
         }
 
-        // --- HUD & LEADERBOARD UPDATES ---
         function updateHUD() {
             if (!player) return;
-
-            // Stats
             document.getElementById('stat-length').innerText = `${Math.floor(player.body.length)}m`;
             document.getElementById('stat-kills').innerText = player.kills;
 
-            // Leaderboard Sorting
             const sortedSnakes = [...snakes].filter(s => !s.isDead).sort((a, b) => b.body.length - a.body.length);
             const listEl = document.getElementById('leaderboard-list');
             listEl.innerHTML = '';
@@ -796,7 +734,6 @@
             });
         }
 
-        // --- SPAWN AI SNAKES ---
         function maintainAISnakes() {
             const aliveAI = snakes.filter(s => s.isAI && !s.isDead).length;
             if (aliveAI < AI_SNAKE_COUNT) {
@@ -805,50 +742,38 @@
                 const x = Math.random() * (WORLD_SIZE - 400) + 200;
                 const y = Math.random() * (WORLD_SIZE - 400) + 200;
                 const ai = new Snake(x, y, randomName, randomSkin, true);
-                ai.targetLength = INITIAL_SNAKE_LENGTH + Math.floor(Math.random() * 40);
+                ai.targetLength = INITIAL_SNAKE_LENGTH + Math.floor(Math.random() * 30);
                 snakes.push(ai);
             }
         }
 
-        // --- MAIN GAME LOOP ---
         function gameLoop() {
             ctx.clearRect(0, 0, width, height);
 
             if (isGameRunning && player) {
-                // Update Entities
                 snakes.forEach(s => s.update());
                 checkSnakeCollisions();
                 maintainAISnakes();
-
-                // Clean Dead Snakes
                 snakes = snakes.filter(s => !s.isDead);
 
-                // Update Camera
                 camera.x += (player.x - camera.x) * 0.1;
                 camera.y += (player.y - camera.y) * 0.1;
 
-                // Render World Transformation
                 ctx.save();
                 ctx.translate(width / 2 - camera.x, height / 2 - camera.y);
 
                 drawGrid(ctx);
-
-                // Draw Foods
                 foods.forEach(f => f.draw(ctx));
 
-                // Draw Particles
                 for (let i = particles.length - 1; i >= 0; i--) {
                     particles[i].update();
                     particles[i].draw(ctx);
                     if (particles[i].alpha <= 0) particles.splice(i, 1);
                 }
 
-                // Draw Snakes
                 snakes.forEach(s => s.draw(ctx));
-
                 ctx.restore();
 
-                // Draw UI Overlays
                 drawMinimap();
                 updateHUD();
             }
@@ -856,29 +781,16 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // --- CONTROLS & EVENT LISTENERS ---
         window.addEventListener('mousemove', (e) => {
             mousePos.x = e.clientX;
             mousePos.y = e.clientY;
         });
 
-        window.addEventListener('mousedown', (e) => {
-            if (e.button === 0) isBoosting = true;
-        });
+        window.addEventListener('mousedown', (e) => { if (e.button === 0) isBoosting = true; });
+        window.addEventListener('mouseup', (e) => { if (e.button === 0) isBoosting = false; });
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') isBoosting = true; });
+        window.addEventListener('keyup', (e) => { if (e.code === 'Space') isBoosting = false; });
 
-        window.addEventListener('mouseup', (e) => {
-            if (e.button === 0) isBoosting = false;
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') isBoosting = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'Space') isBoosting = false;
-        });
-
-        // Skin Selector UI Handler
         document.querySelectorAll('.skin-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 document.querySelectorAll('.skin-option').forEach(o => o.classList.remove('active'));
@@ -887,15 +799,10 @@
             });
         });
 
-        // Start & Restart Handlers
         function startGame() {
-            if (!audioCtx) {
-                audioCtx = new AudioCtx();
-            }
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const nameInput = document.getElementById('player-name').value.trim() || 'Bá Chủ';
 
-            const nameInput = document.getElementById('player-name').value.trim() || 'Mãng Xà';
-            
-            // Reset World
             foods = [];
             snakes = [];
             particles = [];
@@ -904,7 +811,6 @@
                 foods.push(new Food());
             }
 
-            // Create Player
             const startX = WORLD_SIZE / 2;
             const startY = WORLD_SIZE / 2;
             player = new Snake(startX, startY, nameInput, selectedSkin, false);
@@ -913,13 +819,10 @@
             camera.x = startX;
             camera.y = startY;
 
-            // Spawn Initial AI
             maintainAISnakes();
 
-            // Hide Screens
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('gameover-screen').classList.add('hidden');
-
             isGameRunning = true;
         }
 
@@ -933,25 +836,19 @@
         document.getElementById('start-btn').addEventListener('click', startGame);
         document.getElementById('restart-btn').addEventListener('click', startGame);
 
-        // Mobile Touch Joystick Controls
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             document.getElementById('mobile-controls').style.display = 'flex';
-            
             const joystickZone = document.getElementById('joystick-zone');
             const joystickKnob = document.getElementById('joystick-knob');
             const boostBtn = document.getElementById('boost-btn');
 
-            let touchStartX = 0;
-            let touchStartY = 0;
-
+            let touchStartX = 0, touchStartY = 0;
             joystickZone.addEventListener('touchstart', (e) => {
-                const touch = e.touches[0];
                 const rect = joystickZone.getBoundingClientRect();
                 touchStartX = rect.left + rect.width / 2;
                 touchStartY = rect.top + rect.height / 2;
             });
-
             joystickZone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
@@ -959,22 +856,17 @@
                 const dy = touch.clientY - touchStartY;
                 const dist = Math.min(40, Math.hypot(dx, dy));
                 const angle = Math.atan2(dy, dx);
-
                 joystickKnob.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
-
                 mousePos.x = width / 2 + Math.cos(angle) * 100;
                 mousePos.y = height / 2 + Math.sin(angle) * 100;
             });
-
             joystickZone.addEventListener('touchend', () => {
                 joystickKnob.style.transform = 'translate(0px, 0px)';
             });
-
             boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; });
             boostBtn.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; });
         }
 
-        // Start Loop
         requestAnimationFrame(gameLoop);
     </script>
 </body>
