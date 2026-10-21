@@ -307,7 +307,7 @@
         <div class="modal-card">
             <h1>SNAKE.IO 3D</h1>
             <div class="input-group">
-                <input type="text" id="player-name" placeholder="Nhập tên Rắn của bạn..." maxlength="12" value="Bá Chế">
+                <input type="text" id="player-name" placeholder="Nhập tên Rắn của bạn..." maxlength="12" value="Bá Chủ">
             </div>
 
             <p style="font-size:13px; color:#aaa; margin-bottom:10px;">Chọn Trang Phục:</p>
@@ -322,7 +322,8 @@
             <button class="btn-play" id="start-btn">BẮT ĐẦU CHIẾN</button>
 
             <div class="controls-hint">
-                ✨ Đã bật chế độ: Không tự đâm vào mình & Xuyên biên giới!<br>
+                🛡️ Đã cập nhật: Vùng Spawn an toàn cực xa (1000px)!<br>
+                ✨ Bất tử khi mới sinh + Không tự đâm vào đuôi mình.<br>
                 🖱️ Di chuột để lái | Giữ [SPACE] hoặc Chuột trái để Tăng Tốc.
             </div>
         </div>
@@ -346,6 +347,7 @@
         const BOOST_SPEED = 7.5;
         const FOOD_COUNT = 800;
         const AI_SNAKE_COUNT = 16;
+        const SAFE_SPAWN_DISTANCE = 1000; // Đảm bảo AI chỉ sinh ra cách xa người chơi ít nhất 1000px
 
         const SKINS = {
             neon: { head: '#00f0ff', body: ['#00f0ff', '#0088ff', '#0022aa'], glow: '#00f0ff' },
@@ -471,7 +473,7 @@
                 this.score = 0;
                 this.kills = 0;
                 this.isDead = false;
-                this.immunityTimer = 180; // 3 giây bất tử khi mới sinh
+                this.immunityTimer = 180; // 3 giây bất tử khi mới xuất hiện
 
                 this.body = [];
                 this.targetLength = INITIAL_SNAKE_LENGTH;
@@ -656,10 +658,9 @@
                 for (let s2 of snakes) {
                     if (s2.isDead) continue;
 
-                    // BỎ QUA va chạm với chính mình (Không bao giờ tự đâm vào đuôi mình chết)
+                    // Không tự đâm vào đuôi của chính mình
                     if (s1 === s2) continue;
 
-                    // Kiểm tra đầu s1 đâm vào thân s2
                     for (let i = 0; i < s2.body.length; i++) {
                         const p2 = s2.body[i];
                         const dist = Math.hypot(head1.x - p2.x, head1.y - p2.y);
@@ -734,14 +735,23 @@
             });
         }
 
+        // TÍNH NĂNG SPAWN AN TOÀN - CÁCH XA NGƯỜI CHƠI BẮT BUỘC > 1000px
         function maintainAISnakes() {
             const aliveAI = snakes.filter(s => s.isAI && !s.isDead).length;
             if (aliveAI < AI_SNAKE_COUNT) {
+                let spawnX, spawnY, distToPlayer;
+                let attempts = 0;
+
+                do {
+                    spawnX = Math.random() * (WORLD_SIZE - 400) + 200;
+                    spawnY = Math.random() * (WORLD_SIZE - 400) + 200;
+                    distToPlayer = player ? Math.hypot(spawnX - player.x, spawnY - player.y) : SAFE_SPAWN_DISTANCE + 100;
+                    attempts++;
+                } while (distToPlayer < SAFE_SPAWN_DISTANCE && attempts < 50);
+
                 const randomName = AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)];
                 const randomSkin = Object.keys(SKINS)[Math.floor(Math.random() * Object.keys(SKINS).length)];
-                const x = Math.random() * (WORLD_SIZE - 400) + 200;
-                const y = Math.random() * (WORLD_SIZE - 400) + 200;
-                const ai = new Snake(x, y, randomName, randomSkin, true);
+                const ai = new Snake(spawnX, spawnY, randomName, randomSkin, true);
                 ai.targetLength = INITIAL_SNAKE_LENGTH + Math.floor(Math.random() * 30);
                 snakes.push(ai);
             }
