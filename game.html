@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SNAKE.IO: BACKROOMS STILL LIFE</title>
+    <title>SNAKE.IO: BẢO HỘ BÁ CHỦ</title>
     <style>
         * {
             margin: 0;
@@ -17,7 +17,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #0c0d12;
+            background-color: #0d0f18;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #fff;
         }
@@ -26,7 +26,7 @@
             display: block;
             width: 100vw;
             height: 100vh;
-            background: #08090d;
+            background: #090a10;
         }
 
         /* UI Overlays */
@@ -36,20 +36,21 @@
             z-index: 10;
         }
 
+        /* Leaderboard */
         #leaderboard {
             top: 15px;
             right: 15px;
-            background: rgba(15, 18, 28, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(15, 20, 35, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 12px 18px;
             min-width: 200px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
         #leaderboard h3 {
-            font-size: 13px;
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #f39c12;
@@ -72,16 +73,17 @@
         }
 
         #leaderboard-list li.me {
-            color: #00f0ff;
+            color: #2ecc71;
             font-weight: bold;
         }
 
+        /* Stats HUD */
         #stats-hud {
             bottom: 20px;
             left: 20px;
-            background: rgba(15, 18, 28, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(15, 20, 35, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 10px 16px;
             font-size: 14px;
@@ -92,40 +94,17 @@
             font-weight: bold;
         }
 
-        #sound-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 20;
-            background: rgba(20, 25, 40, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(8px);
-            transition: 0.2s;
-        }
-
-        #sound-btn:hover {
-            background: rgba(0, 240, 255, 0.2);
-            border-color: #00f0ff;
-        }
-
+        /* Minimap */
         #minimap-container {
             bottom: 20px;
             right: 20px;
             width: 130px;
             height: 130px;
-            background: rgba(10, 12, 20, 0.85);
+            background: rgba(10, 15, 25, 0.8);
             border: 2px solid rgba(255, 255, 255, 0.15);
             border-radius: 50%;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         #minimap {
@@ -183,15 +162,15 @@
             border: 2px solid rgba(255,255,255,0.4);
         }
 
-        /* Modal Overlays */
+        /* Start/Game Over Screens */
         .modal-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(6, 8, 14, 0.92);
-            backdrop-filter: blur(14px);
+            background: rgba(8, 10, 18, 0.88);
+            backdrop-filter: blur(12px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -200,31 +179,24 @@
         }
 
         .modal-card {
-            background: rgba(18, 22, 38, 0.95);
+            background: rgba(20, 26, 45, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 35px;
             border-radius: 20px;
             width: 90%;
             max-width: 420px;
             text-align: center;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6);
         }
 
         .modal-card h1 {
-            font-size: 26px;
-            background: linear-gradient(45deg, #f39c12, #00f0ff);
+            font-size: 28px;
+            background: linear-gradient(45deg, #00f0ff, #ff0055);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+            margin-bottom: 20px;
             letter-spacing: 1px;
             text-transform: uppercase;
-        }
-
-        .subtitle {
-            font-size: 12px;
-            color: #8a99ad;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
         }
 
         .input-group {
@@ -249,6 +221,7 @@
             box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
         }
 
+        /* Skin Selector */
         .skin-selector {
             display: flex;
             justify-content: center;
@@ -276,19 +249,19 @@
             padding: 14px;
             border: none;
             border-radius: 12px;
-            background: linear-gradient(90deg, #f39c12, #00f0ff);
-            color: #000;
-            font-size: 17px;
+            background: linear-gradient(90deg, #00f0ff, #0077ff);
+            color: #fff;
+            font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 240, 255, 0.4);
             transition: 0.2s;
         }
 
         .btn-play:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 240, 255, 0.5);
+            box-shadow: 0 8px 25px rgba(0, 240, 255, 0.6);
         }
 
         .hidden {
@@ -305,23 +278,23 @@
 </head>
 <body>
 
-    <button id="sound-btn">🔊 STILL LIFE AMBIENT: BẬT</button>
-
     <canvas id="game-canvas"></canvas>
 
+    <!-- UI Overlay Panels -->
     <div id="leaderboard" class="hud-panel">
         <h3>BẢNG XẾP HẠNG</h3>
         <ul id="leaderboard-list"></ul>
     </div>
 
     <div id="stats-hud" class="hud-panel">
-        Chiều dài: <span id="stat-length">20m</span> | Hạ gục: <span id="stat-kills">0</span>
+        Chiều dài: <span id="stat-length">10m</span> | Hạ gục: <span id="stat-kills">0</span>
     </div>
 
     <div id="minimap-container" class="hud-panel">
         <canvas id="minimap"></canvas>
     </div>
 
+    <!-- Mobile UI Controls -->
     <div id="mobile-controls">
         <div id="joystick-zone">
             <div id="joystick-knob"></div>
@@ -329,41 +302,41 @@
         <div id="boost-btn">BOOST</div>
     </div>
 
+    <!-- Start Screen Modal -->
     <div id="start-screen" class="modal-screen">
         <div class="modal-card">
             <h1>SNAKE.IO 3D</h1>
-            <div class="subtitle">BACKROOMS: STILL LIFE EDITION</div>
-
             <div class="input-group">
-                <input type="text" id="player-name" placeholder="Nhập tên Rắn..." maxlength="12" value="Wanderer">
+                <input type="text" id="player-name" placeholder="Nhập tên Rắn của bạn..." maxlength="12" value="Bá Chủ">
             </div>
 
             <p style="font-size:13px; color:#aaa; margin-bottom:10px;">Chọn Trang Phục:</p>
             <div class="skin-selector">
-                <div class="skin-option active" data-skin="backrooms" style="background: linear-gradient(45deg, #f39c12, #e67e22);"></div>
-                <div class="skin-option" data-skin="neon" style="background: linear-gradient(45deg, #00f0ff, #0055ff);"></div>
+                <div class="skin-option active" data-skin="neon" style="background: linear-gradient(45deg, #00f0ff, #0055ff);"></div>
                 <div class="skin-option" data-skin="fire" style="background: linear-gradient(45deg, #ff0055, #ff5500);"></div>
                 <div class="skin-option" data-skin="toxic" style="background: linear-gradient(45deg, #00ff66, #adff2f);"></div>
-                <div class="skin-option" data-skin="void" style="background: linear-gradient(45deg, #8e44ad, #2c3e50);"></div>
+                <div class="skin-option" data-skin="royal" style="background: linear-gradient(45deg, #ff00ff, #7000ff);"></div>
+                <div class="skin-option" data-skin="gold" style="background: linear-gradient(45deg, #ffe600, #ff8800);"></div>
             </div>
 
-            <button class="btn-play" id="start-btn">BẮT ĐẦU VÀO BACKROOMS</button>
+            <button class="btn-play" id="start-btn">BẮT ĐẦU CHIẾN</button>
 
             <div class="controls-hint">
-                📻 Nhạc nền "Still Life" & Âm thanh Đèn Huỳnh Quang O O Backrooms.<br>
-                🛡️ Spawn an toàn 1000px + Không tự va đâm vào chính mình.<br>
-                🖱️ Lái bằng chuột | [SPACE] Tăng tốc.
+                🛡️ Đã cập nhật: Vùng Spawn an toàn cực xa (1000px)!<br>
+                ✨ Bất tử khi mới sinh + Không tự đâm vào đuôi mình.<br>
+                🖱️ Di chuột để lái | Giữ [SPACE] hoặc Chuột trái để Tăng Tốc.
             </div>
         </div>
     </div>
 
+    <!-- Game Over Screen Modal -->
     <div id="gameover-screen" class="modal-screen hidden">
         <div class="modal-card">
-            <h1 style="background: linear-gradient(45deg, #ff0055, #ff5500); -webkit-background-clip: text;">BẠN ĐÃ THẤT LẠC!</h1>
+            <h1 style="background: linear-gradient(45deg, #ff0055, #ff5500); -webkit-background-clip: text;">BẠN ĐÃ HI SINH!</h1>
             <p style="font-size: 16px; margin-bottom: 8px;">Chiều dài đạt được: <span id="final-length" style="color:#00f0ff; font-weight:bold;">0m</span></p>
             <p style="font-size: 16px; margin-bottom: 20px;">Hạ gục đối thủ: <span id="final-kills" style="color:#ff0055; font-weight:bold;">0</span></p>
 
-            <button class="btn-play" id="restart-btn">HỒI SINH TRONG BACKROOMS</button>
+            <button class="btn-play" id="restart-btn">PHỤC THÙ NGAY</button>
         </div>
     </div>
 
@@ -372,22 +345,22 @@
         const INITIAL_SNAKE_LENGTH = 20;
         const BASE_SPEED = 3.8;
         const BOOST_SPEED = 7.5;
-        const FOOD_COUNT = 850;
+        const FOOD_COUNT = 800;
         const AI_SNAKE_COUNT = 16;
-        const SAFE_SPAWN_DISTANCE = 1000;
+        const SAFE_SPAWN_DISTANCE = 1000; // Đảm bảo AI chỉ sinh ra cách xa người chơi ít nhất 1000px
 
         const SKINS = {
-            backrooms: { head: '#f39c12', body: ['#f39c12', '#d35400', '#e67e22'], glow: '#f39c12' },
             neon: { head: '#00f0ff', body: ['#00f0ff', '#0088ff', '#0022aa'], glow: '#00f0ff' },
             fire: { head: '#ff0055', body: ['#ff0055', '#ff5500', '#ffaa00'], glow: '#ff5500' },
             toxic: { head: '#00ff66', body: ['#00ff66', '#aaff00', '#008833'], glow: '#00ff66' },
-            void: { head: '#9b59b6', body: ['#8e44ad', '#2c3e50', '#34495e'], glow: '#8e44ad' }
+            royal: { head: '#d400ff', body: ['#d400ff', '#7700ff', '#3300aa'], glow: '#d400ff' },
+            gold: { head: '#ffe600', body: ['#ffe600', '#ff9900', '#cc5500'], glow: '#ffe600' }
         };
 
         const AI_NAMES = [
-            "Entity 67", "Smiler", "Bacteria", "Kane", "Level 0",
-            "Lurker", "Level 37", "Poolrooms", "Skin-Stealer", "Sorrow",
-            "Lost Soul", "Hollow", "Archivist", "Wanderer", "Partygoer"
+            "Bạch Mộc", "Hắc Long", "Sát Thủ", "Rồng Đỏ", "Vua Rắn", 
+            "Shadow", "Viper", "Anaconda", "Kobra", "Titan", 
+            "Gia Tộc Rắn", "Bá Chủ", "Thần Rắn", "Xạ Thủ", "Mamba"
         ];
 
         const canvas = document.getElementById('game-canvas');
@@ -405,144 +378,25 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // --- BACKROOMS "STILL LIFE" SOUND ENGINE (Web Audio API) ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
-        let isMuted = false;
-        let humNode = null;
-        let humGain = null;
-        let ambientTimer = null;
 
-        function initBackroomsAudio() {
-            if (audioCtx) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-
-            // 1. Tiếng đèn huỳnh quang kêu O O (Fluorescent Lamp Hum)
-            const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            humGain = audioCtx.createGain();
-
-            osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(60, audioCtx.currentTime); // 60Hz hum
-
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(120, audioCtx.currentTime); // 120Hz harmonic
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(180, audioCtx.currentTime);
-
-            osc1.connect(filter);
-            osc2.connect(filter);
-            filter.connect(humGain);
-
-            humGain.gain.setValueAtTime(0.04, audioCtx.currentTime); // Êm dịu vừa đủ nghe
-            humGain.connect(audioCtx.destination);
-
-            osc1.start();
-            osc2.start();
-
-            // 2. Nhạc nền "Still Life" Giai điệu hoài niệm (Melancholic Ambient Chords)
-            scheduleStillLifeMelody();
-        }
-
-        // Giai điệu Still Life: Hợp âm D minor & A minor u uất vang vọng
-        const STILL_LIFE_NOTES = [293.66, 349.23, 440.00, 523.25, 440.00, 349.23, 261.63, 329.63, 392.00, 440.00];
-        let noteIndex = 0;
-
-        function scheduleStillLifeMelody() {
+        function playSound(freq, type, duration) {
             if (!audioCtx) return;
-
-            function playNextStillLifeNote() {
-                if (isMuted) {
-                    setTimeout(playNextStillLifeNote, 3000);
-                    return;
-                }
-
-                try {
-                    const freq = STILL_LIFE_NOTES[noteIndex % STILL_LIFE_NOTES.length];
-                    noteIndex++;
-
-                    const osc = audioCtx.createOscillator();
-                    const noteGain = audioCtx.createGain();
-                    const filter = audioCtx.createBiquadFilter();
-
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq / 2, audioCtx.currentTime); // Trầm ấm
-
-                    // Tape wobble pitch (Làm lệch pitch giống băng cũ)
-                    osc.frequency.linearRampToValueAtTime(freq / 2 + (Math.random() * 2 - 1), audioCtx.currentTime + 3.0);
-
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(600, audioCtx.currentTime);
-
-                    // Reverb / Decay dài u uất
-                    noteGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-                    noteGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.8);
-                    noteGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
-
-                    osc.connect(filter);
-                    filter.connect(noteGain);
-                    noteGain.connect(audioCtx.destination);
-
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 4.6);
-                } catch(e) {}
-
-                // Khoảng cách giữa các nốt dài tạo sự trống trải Still Life
-                setTimeout(playNextStillLifeNote, Math.random() * 2000 + 2500);
-            }
-
-            playNextStillLifeNote();
-        }
-
-        function playEatSound() {
-            if (!audioCtx || isMuted) return;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400 + Math.random() * 150, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.08);
+                osc.stop(audioCtx.currentTime + duration);
             } catch(e) {}
         }
 
-        function playDeathSound() {
-            if (!audioCtx || isMuted) return;
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.6);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.6);
-            } catch(e) {}
-        }
-
-        // Toggle Sound UI
-        document.getElementById('sound-btn').addEventListener('click', () => {
-            isMuted = !isMuted;
-            const btn = document.getElementById('sound-btn');
-            if (isMuted) {
-                btn.innerHTML = '🔇 STILL LIFE AMBIENT: TẮT';
-                if (humGain) humGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            } else {
-                btn.innerHTML = '🔊 STILL LIFE AMBIENT: BẬT';
-                if (humGain) humGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            }
-        });
-
-        // --- GAME LOGIC ---
         let isGameRunning = false;
         let player = null;
         let snakes = [];
@@ -551,7 +405,7 @@
         let camera = { x: 0, y: 0 };
         let mousePos = { x: width / 2, y: height / 2 };
         let isBoosting = false;
-        let selectedSkin = 'backrooms';
+        let selectedSkin = 'neon';
 
         class Food {
             constructor(x, y, radius, isSuper = false, color = null) {
@@ -559,7 +413,7 @@
                 this.y = y || Math.random() * (WORLD_SIZE - 200) + 100;
                 this.radius = radius || (Math.random() * 2 + 3.5);
                 this.isSuper = isSuper;
-                this.color = color || `hsl(${Math.random() * 60 + 30}, 90%, 55%)`; // Tông vàng mốc Backrooms
+                this.color = color || `hsl(${Math.random() * 360}, 100%, 60%)`;
                 this.pulse = Math.random() * Math.PI;
             }
 
@@ -609,7 +463,7 @@
             constructor(x, y, name, skinKey, isAI = false) {
                 this.name = name;
                 this.isAI = isAI;
-                this.skin = SKINS[skinKey] || SKINS.backrooms;
+                this.skin = SKINS[skinKey] || SKINS.neon;
                 this.x = x;
                 this.y = y;
                 this.angle = Math.random() * Math.PI * 2;
@@ -619,7 +473,7 @@
                 this.score = 0;
                 this.kills = 0;
                 this.isDead = false;
-                this.immunityTimer = 180; // Bất tử 3s khi mới xuất hiện
+                this.immunityTimer = 180; // 3 giây bất tử khi mới xuất hiện
 
                 this.body = [];
                 this.targetLength = INITIAL_SNAKE_LENGTH;
@@ -672,7 +526,7 @@
                 this.x += Math.cos(this.angle) * this.speed;
                 this.y += Math.sin(this.angle) * this.speed;
 
-                // Portal Loop Xuyên Biên Giới
+                // Xuyên biên giới bản đồ (Portal Loop)
                 if (this.x < 0) this.x = WORLD_SIZE;
                 if (this.x > WORLD_SIZE) this.x = 0;
                 if (this.y < 0) this.y = WORLD_SIZE;
@@ -719,7 +573,7 @@
                         this.targetLength += f.isSuper ? 3 : 1;
                         this.score += f.isSuper ? 25 : 8;
                         foods.splice(i, 1);
-                        if (!this.isAI) playEatSound();
+                        if (!this.isAI) playSound(450 + Math.random() * 150, 'sine', 0.05);
 
                         if (foods.length < FOOD_COUNT) {
                             foods.push(new Food());
@@ -739,7 +593,7 @@
                 }
 
                 if (!this.isAI) {
-                    playDeathSound();
+                    playSound(150, 'sawtooth', 0.4);
                     showGameOver();
                 }
             }
@@ -804,7 +658,7 @@
                 for (let s2 of snakes) {
                     if (s2.isDead) continue;
 
-                    // Không bao giờ tự đâm vào đuôi mình chết
+                    // Không tự đâm vào đuôi của chính mình
                     if (s1 === s2) continue;
 
                     for (let i = 0; i < s2.body.length; i++) {
@@ -824,10 +678,9 @@
             }
         }
 
-        // Vẽ lưới Backrooms Carpet Grid
         function drawGrid(ctx) {
             const gridSize = 80;
-            ctx.strokeStyle = 'rgba(243, 156, 18, 0.05)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 1;
 
             const startX = Math.max(0, Math.floor((camera.x - width / 2) / gridSize) * gridSize);
@@ -844,10 +697,10 @@
             }
             ctx.stroke();
 
-            ctx.strokeStyle = '#f39c12';
+            ctx.strokeStyle = '#00f0ff';
             ctx.lineWidth = 6;
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#f39c12';
+            ctx.shadowColor = '#00f0ff';
             ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
             ctx.shadowBlur = 0;
         }
@@ -858,7 +711,7 @@
 
             for (let s of snakes) {
                 if (s.isDead) continue;
-                minimapCtx.fillStyle = s === player ? '#00f0ff' : '#f39c12';
+                minimapCtx.fillStyle = s === player ? '#00f0ff' : '#ff0055';
                 minimapCtx.beginPath();
                 minimapCtx.arc(s.x * scale, s.y * scale, s === player ? 3 : 2, 0, Math.PI * 2);
                 minimapCtx.fill();
@@ -882,7 +735,7 @@
             });
         }
 
-        // SPAWN XA CỰC AN TOÀN > 1000px
+        // TÍNH NĂNG SPAWN AN TOÀN - CÁCH XA NGƯỜI CHƠI BẮT BUỘC > 1000px
         function maintainAISnakes() {
             const aliveAI = snakes.filter(s => s.isAI && !s.isDead).length;
             if (aliveAI < AI_SNAKE_COUNT) {
@@ -957,9 +810,8 @@
         });
 
         function startGame() {
-            initBackroomsAudio();
-
-            const nameInput = document.getElementById('player-name').value.trim() || 'Wanderer';
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const nameInput = document.getElementById('player-name').value.trim() || 'Bá Chủ';
 
             foods = [];
             snakes = [];
